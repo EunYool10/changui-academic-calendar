@@ -69,7 +69,7 @@ button { cursor: pointer; }
 .hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 10px; color: var(--hero-soft); font-size: 12px; }
 .meta-divider { color: color-mix(in srgb, var(--hero-soft) 65%, transparent); }
 .season-art { grid-area: art; width: clamp(104px, 17vw, 220px); aspect-ratio: 300 / 220; }
-.season-art svg { display: block; width: 100%; height: 100%; }
+.season-art img { display: block; width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
 .staff-actions { grid-area: actions; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .staff-actions:not(:has(> :not([hidden]))) { display: none; }
 
@@ -174,6 +174,15 @@ footer button:hover { color: var(--forest); text-decoration: underline; text-und
 .manage-row { display: grid; width: 100%; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 10px; padding: 10px 4px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--muted); text-align: left; font: 13px var(--serif); }
 .manage-row b { color: var(--ink); font-weight: 400; }
 .manage-row:hover { background: #f0f1eb; }
+.manage-row.active { background: var(--green-wash); }
+.manage-row.active b { font-weight: 700; }
+.manage-row span:last-child { color: var(--forest); }
+.manage-list-title b { font-weight: inherit; }
+.dialog .quiet-button { box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--ink); }
+.dialog .quiet-button:hover { background: var(--sub); }
+.password-form { margin-top: 16px; }
+.form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.terms-effective { margin: 12px 0 4px !important; color: var(--muted); font-size: 12px; }
 
 .terms-dialog { width: min(620px, calc(100% - 32px)); border: 0; }
 .dialog-card.terms-card { display: flex; flex-direction: column; max-height: min(720px, 88vh); max-height: min(720px, 88dvh); padding: 0; }
@@ -228,7 +237,7 @@ footer button:hover { color: var(--forest); text-decoration: underline; text-und
   /* iOS zooms into inputs smaller than 16px. */
   .dialog-card input:not([type=checkbox]), .form-grid input, .form-grid select, .month-select { font-size: 16px; }
   .dialog-card { padding: 26px 20px 22px; }
-  .form-grid { grid-template-columns: 1fr; }
+  .form-grid, .form-grid.three { grid-template-columns: 1fr; }
   .terms-header { padding: 30px 22px 24px; }
   .terms-header h2 { font-size: 24px; }
   .terms-summary { grid-template-columns: 1fr; margin: 18px 22px 0; }
