@@ -17,7 +17,8 @@
   const yearStart = `${YEAR}-01-01`, yearEnd = `${YEAR}-12-31`;
   let selected = Number(kst.year) === YEAR ? `${kst.year}-${kst.month}-${kst.day}` : yearStart;
   let month = Number(selected.slice(5, 7)) - 1;
-  let events = [], shownArt = -1, editingId = null, session = null;
+  let events = [], editingId = null, session = null;
+  const today = `${kst.year}-${kst.month}-${kst.day}`;
   let lastTap = { day: '', at: 0 }; // 같은 날짜를 짧은 간격으로 두 번 누르면 편집 (마우스 더블 클릭·휴대폰 두 번 탭 공통)
   const DOUBLE_TAP_MS = 450;
   const isAdmin = () => !!session && session.role === 'admin';
@@ -59,6 +60,7 @@
     }
     events = list || JSON.parse($('initialEvents').textContent);
     $('eventCount').textContent = `${events.filter(inYear).length}개 일정`;
+    renderDday();
     const latest = list ? list.reduce((m, e) => (e.updatedAt > m ? e.updatedAt : m), '') : '';
     $('footerUpdated').hidden = !latest;
     if (latest) $('footerUpdated').textContent = `일정 업데이트 ${kstDate(latest)}`;
@@ -159,7 +161,6 @@
     $('prevMonth').disabled = month === 0;
     $('nextMonth').disabled = month === 11;
     $('hero').dataset.month = String(month + 1);
-    if (shownArt !== month) { shownArt = month; $('seasonArt').innerHTML = `<img src="art/${pad(month + 1)}.webp" alt="" width="300" height="220" decoding="async">`; }
     const grid = $('calendarGrid');
     grid.innerHTML = '';
     const first = new Date(YEAR, month, 1), days = new Date(YEAR, month + 1, 0).getDate();
@@ -196,6 +197,21 @@
     const found = events.filter(e => isWithin(e, selected));
     $('agendaList').innerHTML = found.length ? found.map(e => `<article class="agenda-item"><span class="agenda-marker ${categoryOf(e.category)}"></span><div><span class="agenda-range">${e.start === e.end ? shortDate(e.start) : `${shortDate(e.start)} — ${shortDate(e.end)}`}</span><h4>${escapeHTML(e.title)}</h4></div><span class="category-label">${CATEGORY_NAMES[categoryOf(e.category)]}</span></article>`).join('')
       : '<div class="empty-agenda">등록된 일정이 없는 날입니다.</div>';
+  }
+  /* ---------- 다음 일정 D-day (오늘은 한국 시간 기준) ---------- */
+  const dayNumber = d => Date.UTC(Number(d.slice(0, 4)), Number(d.slice(5, 7)) - 1, Number(d.slice(8, 10))) / 86400000;
+  const withWeekday = d => `${Number(d.slice(5, 7))}.${Number(d.slice(8, 10))}(${'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]})`;
+  const ddayText = e => { const n = dayNumber(e.start) - dayNumber(today); return n > 0 ? `D-${n}` : (n === 0 ? 'D-DAY' : '진행 중'); };
+  function renderDday() {
+    const upcoming = events.filter(e => e.end >= today).sort((a, b) => a.start.localeCompare(b.start) || a.title.localeCompare(b.title)).slice(0, 3);
+    const box = $('dday');
+    if (!upcoming.length) { box.innerHTML = '<p class="dday-label"><span>다음 일정</span></p><p class="dday-empty">남은 일정이 없습니다.<br>새 일정이 등록되면 여기에 표시됩니다.</p>'; return; }
+    const [next, ...rest] = upcoming, cat = categoryOf(next.category);
+    const range = next.start === next.end ? withWeekday(next.start) : `${withWeekday(next.start)} ~ ${withWeekday(next.end)}`;
+    const jump = e => (e.start < today ? today : e.start);
+    box.innerHTML = `<p class="dday-label"><span>다음 일정</span><span class="dday-cat ${cat}">${CATEGORY_NAMES[cat]}</span></p>`
+      + `<button type="button" class="dday-main" data-date="${jump(next)}"><strong class="dday-count ${cat}">${ddayText(next)}</strong><span class="dday-info"><b>${escapeHTML(next.title)}</b><span>${range}</span></span></button>`
+      + (rest.length ? `<ol class="dday-list">${rest.map(e => `<li><button type="button" data-date="${jump(e)}"><span class="dday-date">${withWeekday(e.start)}</span><span class="dday-title">${escapeHTML(e.title)}</span><span class="dday-n">${ddayText(e)}</span></button></li>`).join('')}</ol>` : '');
   }
   function setMonth(next) { month = Math.max(0, Math.min(11, next)); selected = `${YEAR}-${pad(month + 1)}-01`; render(); focusSelected(); }
 
@@ -269,6 +285,13 @@
     $('loginDialog').showModal();
   });
   $('adminBtn').addEventListener('click', openManage);
+  $('dday').addEventListener('click', ev => {
+    const btn = ev.target.closest('[data-date]'); if (!btn) return;
+    const d = btn.dataset.date;
+    if (!d.startsWith(`${YEAR}-`)) return;
+    month = Number(d.slice(5, 7)) - 1; selected = d; render(); focusSelected();
+    if ($('calendarGrid').getBoundingClientRect().top > innerHeight * .6) $('calendar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   $('logoutBtn').addEventListener('click', signOut);
   $('termsBtn').addEventListener('click', () => $('termsDialog').showModal());
   $('termsInline').addEventListener('click', () => $('termsDialog').showModal());
@@ -325,6 +348,5 @@
     render();
     await restoreSession();
     showAuth();
-    setTimeout(() => { for (let m = 1; m <= 12; m++) new Image().src = `art/${pad(m)}.webp`; }, 2500);
   })();
 })();

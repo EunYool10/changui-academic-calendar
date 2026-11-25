@@ -30,7 +30,7 @@ Firestore에 연결할 수 없을 때는 `index.html`에 들어 있는 2026학�
 ## 구성
 
 - `index.html`, `style.css`, `app.js`: 화면, 달력, 교직원 로그인과 관리 창, 이용 안내
-- `art/`: 달마다 바뀌는 머리글 그림(WebP)
+- 머리글 오른쪽: 다음 일정 D-day와 이어지는 일정 2개 (한국 시간 기준)
 - `config.js`: Firebase 웹 설정
 - `firestore.rules`: Firestore 보안 규칙
 - `events.json`: 2026학년도 일정 원본 35건

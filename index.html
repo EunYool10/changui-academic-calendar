@@ -7,8 +7,8 @@
   <meta name="description" content="창의경영고등학교 학사 일정 달력">
   <title>창의경영고등학교 · 학사 달력</title>
   <link rel="icon" type="image/svg+xml" href="calendar.svg">
-  <link rel="stylesheet" href="style.css?v=20261125-5">
-  <script src="config.js?v=20261125-5"></script>
+  <link rel="stylesheet" href="style.css?v=20261125-6">
+  <script src="config.js?v=20261125-6"></script>
   <script id="initialEvents" type="application/json">[
     {"start":"2026-01-02","end":"2026-01-02","title":"졸업식, 종업식","category":"school"},
     {"start":"2026-03-03","end":"2026-03-03","title":"입학식, 개학식","category":"school"},
@@ -46,13 +46,13 @@
     {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
     {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
   ]</script>
-  <script defer src="app.js?v=20261125-5"></script>
+  <script defer src="app.js?v=20261125-6"></script>
 </head>
 <body>
   <main class="page-shell">
     <section id="hero" class="hero">
       <div class="hero-copy"><p class="eyebrow">창의경영고등학교 <span id="heroYear">2026</span></p><h1>학사 일정</h1><p class="intro">달을 넘겨 날짜별 일정을 확인하세요.</p><div class="hero-meta"><span>1월 — 12월</span><span class="meta-divider">/</span><span id="eventCount">35개 일정</span></div></div>
-      <div class="season-art" id="seasonArt" aria-hidden="true"></div>
+      <aside class="dday" id="dday" aria-label="다가오는 일정"></aside>
       <div class="staff-actions"><button id="loginBtn" class="quiet-button" type="button">교직원 로그인</button><button id="adminBtn" class="solid-button" type="button" hidden>일정 관리</button><button id="logoutBtn" class="quiet-button" type="button" hidden>로그아웃</button></div>
     </section>
     <div class="calendar-layout">
