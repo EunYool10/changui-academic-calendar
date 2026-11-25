@@ -210,7 +210,7 @@ footer button:hover { color: var(--forest); text-decoration: underline; text-und
   #agenda { padding: 24px var(--gutter) 28px; border-top: 1px solid var(--line); border-left: 0; }
 }
 
-/* Phones: full-bleed page; cells show one clipped line per event, the full titles appear in the list below. */
+/* Phones: full-bleed page; event titles wrap inside the narrow cells instead of being cut off. */
 @media (max-width: 720px) {
   :root { --gutter: 16px; --cell-h: 66px; --chip-size: 10px; }
   body { padding: 0; background: var(--paper); }
@@ -222,7 +222,7 @@ footer button:hover { color: var(--forest); text-decoration: underline; text-und
   .day { gap: 3px; padding: 4px 3px 5px; }
   .day-num { padding-left: 2px; font-size: 12px; line-height: 16px; }
   .day-events { gap: 2px; }
-  .event-chip { padding: 1px 2px 1px 3px; border-left-width: 2px; border-radius: 1px; letter-spacing: -.04em; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+  .event-chip { padding: 2px 2px 2px 3px; border-left-width: 2px; border-radius: 1px; line-height: 1.25; letter-spacing: -.04em; }
   .legend { gap: 6px 14px; font-size: 11px; }
   .legend-note { flex-basis: 100%; margin-left: 0; }
   /* iOS zooms into inputs smaller than 16px. */
@@ -242,4 +242,10 @@ footer button:hover { color: var(--forest); text-decoration: underline; text-und
   .arrow { width: 34px; height: 34px; }
   .month-select { min-width: 76px; height: 34px; }
   .calendar-head h2 { font-size: 32px; }
+}
+/* Fold cover screens and other very narrow phones. */
+@media (max-width: 340px) {
+  .hero { column-gap: 12px; }
+  .season-art { width: 76px; }
+  .day { padding: 4px 2px 5px; }
 }
