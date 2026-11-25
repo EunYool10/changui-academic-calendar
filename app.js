@@ -56,6 +56,7 @@
       cell.innerHTML=`<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e=>`<span class="event-chip ${escapeHTML(e.category)}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
       cell.addEventListener('click',()=>{selected=iso;render();$('calendarGrid').querySelector(`[data-date="${selected}"]`)?.focus({preventScroll:true});}); $('calendarGrid').append(cell);
     }
+    for (let i=first.getDay()+days;i%7;i++) { const blank=document.createElement('div'); blank.className='day empty'; blank.setAttribute('aria-hidden','true'); $('calendarGrid').append(blank); }
     renderAgenda();
   }
   function renderAgenda() {
