@@ -41,7 +41,9 @@
       ['#dbe5ef','#3d5872','<path d="M48 178q57-21 111-7t89-14M79 172V88m0 42 26-28m-26 48-25-20m74 42V73m0 48 28-28m-28 47-24-20"/><path d="M212 60l4 9 9 4-9 4-4 9-4-9-9-4 9-4Z"/><path d="M175 92l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>']
     ];
     const [wash,ink,drawing] = drawings[month];
-    $('seasonArt').innerHTML=`<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M39 183q16-77 99-106 79-27 134 26 31 30 0 80-52 24-135 8-63 12-98-8Z" fill="${wash}"/><path d="M47 183q49-9 98 1t119-1" fill="none" stroke="#b9b6a8" stroke-width="1.5"/><g fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${drawing}</g></svg>`;
+    const accents = ['#f7fbfc','#f4e8ca','#f8df79','#e9b4bd','#e4d785','#bcdce7','#f2c761','#b9e3da','#edc65d','#d78b5d','#d7ba60','#b9d5e5'];
+    const grounds = ['#c2d0d1','#c9d4d6','#b6c99f','#d9aeb7','#aac792','#a6c9d1','#d8ac63','#78aea5','#d4ab5e','#bd7057','#a99dba','#8da9c0'];
+    $('seasonArt').innerHTML=`<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="25" y="20" width="250" height="170" rx="18" fill="${wash}"/><circle cx="218" cy="63" r="21" fill="${accents[month]}" opacity=".9"/><path d="M30 157q42-38 85-13t81-16q38-27 75 13v49H30Z" fill="${grounds[month]}" opacity=".72"/><path d="M30 174q49-15 97-2t85-5q32-7 59 7v16H30Z" fill="#f8f6ef" opacity=".85"/><path d="M43 181q53-8 106 1t111-1" fill="none" stroke="#a7aaa0" stroke-width="1.5"/><g fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${drawing}</g></svg>`;
     $('calendarGrid').innerHTML = '';
     const first = new Date(2026,month,1), days = new Date(2026,month+1,0).getDate();
     for (let i=0;i<first.getDay();i++) { const blank=document.createElement('div'); blank.className='day empty'; blank.setAttribute('aria-hidden','true'); $('calendarGrid').append(blank); }
