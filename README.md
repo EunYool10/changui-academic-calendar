@@ -22,7 +22,11 @@ Supabase를 연결하지 않아도 전달된 정적 일정은 읽을 수 있습�
 
 `outputs` 안의 파일을 새 GitHub 저장소 루트에 올린 뒤 저장소 Settings → Pages에서 `Deploy from a branch`, `main`, `/ (root)`를 선택하세요. 또는 이미 보유한 저장소의 루트로 파일을 옮겨도 됩니다. `index.html`, `style.css`, `app.js`, `events.json`, `config.js`는 같은 폴더에 있어야 합니다.
 
-GitHub Pages 배포 주소와 저장소는 게시 후 이 안내에 기록합니다. 로그인 및 여러 교직원 간 일정 공유는 Supabase 프로젝트 값을 `config.js`에 설정해야 활성화됩니다.
+GitHub Pages: https://eunyool10.github.io/changui-academic-calendar/
+
+저장소: https://github.com/EunYool10/changui-academic-calendar
+
+로그인 및 여러 교직원 간 일정 공유는 Supabase 프로젝트 값을 `config.js`에 설정해야 활성화됩니다.
 
 ## 개인정보 안내
 
