@@ -73,7 +73,7 @@
       <p class="eyebrow">교직원 전용</p>
       <h2>교직원 로그인</h2>
       <p class="dialog-copy">학교에서 받은 관리자 아이디로 로그인하면 학사 일정을 추가·수정·삭제할 수 있습니다.</p>
-      <label>아이디<input id="loginId" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="32" required></label>
+      <label>아이디<input id="loginId" autofocus autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="32" required></label>
       <label>비밀번호<input type="password" id="password" autocomplete="current-password" required></label>
       <label class="checkline"><input type="checkbox" id="termsAgree" required><span><button type="button" class="text-link" id="termsInline">이용 안내 및 개인정보 처리</button>를 확인했습니다.</span></label>
       <p id="loginMessage" class="form-message" role="status"></p>
@@ -90,7 +90,7 @@
       <p id="roleNote" class="dialog-copy"></p>
       <form id="eventForm">
         <div class="form-grid">
-          <label>일정명<input id="eventTitle" maxlength="100" required placeholder="일정 이름"></label>
+          <label>일정명<input id="eventTitle" autofocus maxlength="100" required placeholder="일정 이름"></label>
           <label>분류<select id="eventCategory"><option value="school">학교 일정</option><option value="exam">시험</option><option value="holiday">휴일·방학</option></select></label>
           <label>시작일<input type="date" id="eventStart" required></label>
           <label>종료일<input type="date" id="eventEnd" required></label>
