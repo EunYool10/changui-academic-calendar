@@ -4,7 +4,9 @@
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
   const $ = id => document.getElementById(id);
   const seasonNames = ['겨울의 시작','새 학기의 봄','꽃 피는 봄','초록의 봄','초여름','여름의 문턱','한여름','여름의 끝','가을의 시작','깊어지는 가을','겨울의 문턱','한 해의 끝'];
-  let month = 0, selected = '2026-01-02', events = [], session = null, role = null, editingId = null;
+  const kstNow = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).reduce((date, part) => ({ ...date, [part.type]: part.value }), {});
+  const initialDate = Number(kstNow.year) === 2026 ? `${kstNow.year}-${kstNow.month}-${kstNow.day}` : '2026-01-02';
+  let month = Number(initialDate.slice(5,7)) - 1, selected = initialDate, events = [], session = null, role = null, editingId = null;
   $('monthSelect').innerHTML = Array.from({length:12},(_,i)=>`<option value="${i}">${i+1}월</option>`).join('');
   const dateISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const isWithin = (e, iso) => e.start <= iso && iso <= e.end;
@@ -23,14 +25,22 @@
     $('monthKicker').textContent = `2026학년도 · ${seasonNames[month]}`;
     $('calendarGrid').setAttribute('aria-label',`2026년 ${month+1}월 학사 일정`);
     $('prevMonth').disabled = month === 0; $('nextMonth').disabled = month === 11;
-    const season = [0,11].includes(month) ? 'winter' : [2,3,4].includes(month) ? 'spring' : [5,6,7].includes(month) ? 'summer' : 'autumn';
-    const drawings = {
-      winter: ['#e7edeb','#607e83','<path d="M65 159q43-27 80-67m-56 47-7-36m25 22 1-39m-17 76 36-8m-22-36 28-4"/><path d="m206 88 0 20m-9-10h18m-15-7 12 14m0-14-12 14"/><path d="M96 61v10m-5-5h10m-8-4 6 8m0-8-6 8"/>'],
-      spring: ['#f1e8dc','#9b6a58','<path d="M78 168q19-40 49-72m-30 43-22-4m35-16 2-25m-4 33 26-5m-1 43q22-37 52-58m-26 29-19-4m34-11 2-23"/><path d="M122 87q-9-8 0-16 8 7 0 16Zm0-17q-8-8 0-16 8 8 0 16Zm-10 7q-9-8-16 0 7 9 16 0Zm20 0q9-8 16 0-7 9-16 0Z"/><circle cx="122" cy="77" r="3"/><path d="M181 105q-8-7 0-14 7 7 0 14Zm0-15q-7-7 0-14 7 7 0 14Zm-9 7q-7-7-14 0 7 7 14 0Zm18 0q7-7 14 0-7 7-14 0Z"/><circle cx="181" cy="98" r="3"/>'],
-      summer: ['#edead8','#5c7658','<path d="M71 169q42-39 71-94m-42 55q-34-5-37-32 25-4 41 21m8-17q-1-34 24-47 13 26-9 49m5 31q-2-38 27-54 11 30-13 55m-3-31q27-9 45 8-15 20-38 11"/><path d="M208 79v20m-10-10h20m-17-7 14 14m0-14-14 14"/><path d="M230 123q11-11 22 0m-11-11v23"/>'],
-      autumn: ['#eee3d6','#a35d46','<path d="M74 167q42-36 91-86m-63 60q-31 1-39-23 25-10 44 8m17-24q-3-28 20-41 16 24-6 45m10 3q25-13 44 1-12 22-38 16"/><path d="M186 68q-2-19 14-28 13 16-2 31m17 47q11-12 23-2-5 15-19 12m-77-69q-12-10-6-24 16 5 13 20"/><path d="M56 184q56-9 110 0t82-1"/>']
-    };
-    const [wash,ink,drawing] = drawings[season];
+    $('hero').dataset.month = String(month + 1);
+    const drawings = [
+      ['#dfeaf0','#4d6d7d','<path d="M53 177q50-26 97-11t96-6M78 156V77m0 40 27-27m-27 47-22-20m73 51V64m0 43 25-25m-25 47-23-21M56 70l9 9m-1-17 0 18m-8-9h18"/><circle cx="205" cy="68" r="17"/>'],
+      ['#e7edf0','#647682','<path d="M58 174q64-18 111-7t84-12M106 166V74m0 40 27-32m-27 54-28-24m76 55V92m0 33 23-24m-23 42-24-18"/><path d="M210 55v26m-13-13h26M66 83q11-10 22 0m96-27q11-10 22 0"/>'],
+      ['#e8eed9','#648052','<path d="M57 177q60-24 112-8t81-12M88 169q13-50 40-91m-20 48q-27-7-33-32 25-1 36 23m6-17q-2-30 20-42 13 22-9 43m8 48q17-43 48-69m-21 37q-20-5-25-25 20-1 29 17"/><path d="M210 62q10-10 20 0m-10-10v20"/>'],
+      ['#f2dde0','#8d596a','<path d="M56 177q55-20 107-7t83-13M81 169q21-49 55-92m-28 50-25-7m40-20 2-28m13 88q18-43 49-67m-26 34-20-6"/><g fill="#c2748c" stroke="none"><circle cx="136" cy="77" r="8"/><circle cx="121" cy="91" r="7"/><circle cx="188" cy="95" r="8"/><circle cx="171" cy="108" r="6"/></g>'],
+      ['#e1eee4','#50775b','<path d="M56 177q54-19 109-7t86-13M89 170q13-56 49-96m-25 50q-28-8-34-36 26 0 37 26m3-13q0-34 26-47 12 28-12 49m12 55q8-45 45-72m-18 39q-23-5-29-27 23-2 33 19"/><circle cx="220" cy="64" r="14"/>'],
+      ['#ddebf0','#517288','<path d="M54 178q63-17 111-6t84-15M82 171q20-57 56-96m-28 50-25-7m40-19 2-29m14 92q13-43 49-73m-24 38-22-7"/><path d="M205 65c-18 16-8 34 0 45m20-49c-18 16-8 34 0 45m20-37c-13 13-7 27 0 36"/>'],
+      ['#f0dfbc','#956436','<path d="M49 178q62-17 115-6t88-16M81 172q18-48 55-93m-28 52-23-5m38-22 3-29m13 87q20-46 51-73m-27 37-20-5"/><circle cx="222" cy="62" r="21"/><path d="M190 143q17-14 34 0m-17-15v30"/>'],
+      ['#d9eeeb','#397b7a','<path d="M45 170q23-15 47 0t47 0 47 0 47 0 47 0"/><path d="M44 185q23-15 47 0t47 0 47 0 47 0 47 0"/><path d="M86 163q23-54 50-88m-27 49-24-7m41-21 3-29"/><circle cx="218" cy="62" r="19"/>'],
+      ['#f0dfc1','#a07031','<path d="M50 178q57-18 108-6t90-15M82 171q13-48 46-94m-24 52-25-5m41-22 3-30m13 88q17-46 48-74m-24 38-23-5"/><g fill="#c48635" stroke="none"><path d="m157 78 10 12-13 6 5-14Z"/><path d="m184 102 11 11-13 8 4-15Z"/><path d="m113 98 9 12-13 5 4-14Z"/></g>'],
+      ['#ead6c7','#994f3c','<path d="M47 177q55-20 109-7t92-13M78 171q19-53 55-94m-27 51-27-6m43-20 2-29m15 88q13-47 50-75m-25 39-23-7"/><path d="M207 70q9-8 18 0m-9-10v21M218 111q9-8 18 0m-9-10v21"/>'],
+      ['#e4e0ec','#645a7c','<path d="M48 177q58-20 109-7t90-13M81 171q17-51 48-94m-24 53-27-7m43-20 2-29m17 88q15-46 48-76m-25 39-23-6"/><g fill="#d3a847" stroke="none"><circle cx="112" cy="100" r="8"/><circle cx="135" cy="82" r="7"/><circle cx="182" cy="99" r="8"/></g>'],
+      ['#dbe5ef','#3d5872','<path d="M48 178q57-21 111-7t89-14M79 172V88m0 42 26-28m-26 48-25-20m74 42V73m0 48 28-28m-28 47-24-20"/><path d="M212 60l4 9 9 4-9 4-4 9-4-9-9-4 9-4Z"/><path d="M175 92l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>']
+    ];
+    const [wash,ink,drawing] = drawings[month];
     $('seasonArt').innerHTML=`<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M39 183q16-77 99-106 79-27 134 26 31 30 0 80-52 24-135 8-63 12-98-8Z" fill="${wash}"/><path d="M47 183q49-9 98 1t119-1" fill="none" stroke="#b9b6a8" stroke-width="1.5"/><g fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${drawing}</g></svg>`;
     $('calendarGrid').innerHTML = '';
     const first = new Date(2026,month,1), days = new Date(2026,month+1,0).getDate();
@@ -40,7 +50,7 @@
       const cell=document.createElement('button'); cell.type='button'; cell.className=`day${date.getDay()===0?' sunday':''}${date.getDay()===6?' saturday':''}${iso===selected?' selected':''}${dayEvents.length?' has-event':''}`;
       cell.dataset.date=iso; cell.setAttribute('role','gridcell'); cell.setAttribute('aria-selected',String(iso===selected));
       cell.setAttribute('aria-label',`${month+1}월 ${n}일${dayEvents.length?`, 일정 ${dayEvents.length}개`:''}`);
-      cell.innerHTML=`<span class="day-num">${n}</span>${dayEvents.map(e=>`<span class="event-chip ${escapeHTML(e.category)}">${escapeHTML(e.title)}</span>`).join('')}`;
+      cell.innerHTML=`<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e=>`<span class="event-chip ${escapeHTML(e.category)}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
       cell.addEventListener('click',()=>{selected=iso;render();$('calendarGrid').querySelector(`[data-date="${selected}"]`)?.focus({preventScroll:true});}); $('calendarGrid').append(cell);
     }
     renderAgenda();

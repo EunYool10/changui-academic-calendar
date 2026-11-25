@@ -1,3 +1,16 @@
+@font-face {
+  font-family: "School Safety Notification";
+  src: url("fonts/HakgyoansimAllimjang-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "School Safety Notification";
+  src: url("fonts/HakgyoansimAllimjang-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
   --paper: #fffef9;
   --ground: #e9ebe5;
@@ -13,8 +26,9 @@
   --blue-wash: #e5edf0;
   --gold: #8a6a2f;
   --gold-wash: #f1ecd9;
-  --sans: "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
-  --serif: "Batang", "바탕", "Noto Serif KR", serif;
+  --sans: "School Safety Notification", "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
+  --serif: "School Safety Notification", "Batang", "바탕", serif;
+  --event: "School Safety Notification", "Malgun Gothic", "맑은 고딕", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -25,15 +39,27 @@ button { cursor: pointer; }
 .page-shell { width: min(1320px, 100%); min-height: calc(100vh - 44px); margin: 0 auto; overflow: hidden; background: var(--paper); }
 
 /* A school noticeboard header, with the seasonal sketch as its only decoration. */
-.hero { min-height: 225px; display: flex; align-items: center; position: relative; padding: 31px 60px; overflow: hidden; background: var(--forest); color: #f8f6ed; }
-.hero::before { position: absolute; top: 0; bottom: 0; left: 0; width: 8px; background: var(--brick); content: ""; }
+.hero { --hero: #456577; --hero-accent: #e1ab5f; --hero-text: #fffdf6; --hero-soft: #e1edf1; min-height: 225px; display: flex; align-items: center; position: relative; padding: 31px 60px; overflow: hidden; background: var(--hero); color: var(--hero-text); transition: background .28s ease; }
+.hero::before { position: absolute; top: 0; bottom: 0; left: 0; width: 8px; background: var(--hero-accent); content: ""; }
+.hero[data-month="1"] { --hero: #516e80; --hero-accent: #d9ac62; --hero-text: #fffef8; --hero-soft: #e2edf0; }
+.hero[data-month="2"] { --hero: #687988; --hero-accent: #e5c892; --hero-text: #fffef9; --hero-soft: #e8eff0; }
+.hero[data-month="3"] { --hero: #647952; --hero-accent: #efd27c; --hero-text: #fffef6; --hero-soft: #ebf0dc; }
+.hero[data-month="4"] { --hero: #8c5968; --hero-accent: #f1bfad; --hero-text: #fffafb; --hero-soft: #f4dfe4; }
+.hero[data-month="5"] { --hero: #55745c; --hero-accent: #d6dc9c; --hero-text: #fffef9; --hero-soft: #e4f0e6; }
+.hero[data-month="6"] { --hero: #547587; --hero-accent: #bddce2; --hero-text: #fbfefe; --hero-soft: #dfedf1; }
+.hero[data-month="7"] { --hero: #9b6334; --hero-accent: #f1d17a; --hero-text: #fffdf7; --hero-soft: #f5e3bf; }
+.hero[data-month="8"] { --hero: #3f7d7c; --hero-accent: #c3e5dc; --hero-text: #fbfffd; --hero-soft: #dcefeb; }
+.hero[data-month="9"] { --hero: #9a7032; --hero-accent: #f1d287; --hero-text: #fffdf7; --hero-soft: #f4e5c5; }
+.hero[data-month="10"] { --hero: #914f3e; --hero-accent: #e2ad78; --hero-text: #fffaf6; --hero-soft: #f0d8c7; }
+.hero[data-month="11"] { --hero: #685d7d; --hero-accent: #d7ba60; --hero-text: #fffdf9; --hero-soft: #e7e1f0; }
+.hero[data-month="12"] { --hero: #3d5872; --hero-accent: #a9d0df; --hero-text: #fbfdff; --hero-soft: #dce8f1; }
 .hero-copy { z-index: 1; }
-.eyebrow { margin: 0 0 13px; color: #d2ded4; font-size: 11px; letter-spacing: .03em; }
-.eyebrow span { padding-left: 8px; color: #e9bd78; }
-.hero h1 { margin: 0; color: #fffdf6; font: 500 50px/1.16 var(--serif); letter-spacing: -.04em; }
-.intro { margin: 12px 0 0; color: #e1e9df; font: 14px/1.65 var(--serif); }
-.hero-meta { display: flex; align-items: center; gap: 11px; margin-top: 15px; color: #d3ded4; font-size: 11px; }
-.meta-divider { color: #91a796; }
+.eyebrow { margin: 0 0 13px; color: var(--hero-soft); font-size: 11px; letter-spacing: .03em; }
+.eyebrow span { padding-left: 8px; color: var(--hero-accent); }
+.hero h1 { margin: 0; color: var(--hero-text); font: 500 50px/1.16 var(--serif); letter-spacing: -.04em; }
+.intro { margin: 12px 0 0; color: var(--hero-soft); font: 14px/1.65 var(--serif); }
+.hero-meta { display: flex; align-items: center; gap: 11px; margin-top: 15px; color: var(--hero-soft); font-size: 11px; }
+.meta-divider { color: color-mix(in srgb, var(--hero-soft) 65%, transparent); }
 .season-art { width: 220px; height: 165px; margin: 0 35px 0 auto; opacity: .97; }
 .season-art svg { display: block; width: 100%; height: 100%; }
 .staff-actions { position: absolute; right: 30px; bottom: 20px; display: flex; gap: 6px; }
@@ -72,15 +98,18 @@ button { cursor: pointer; }
 .weekdays { height: 37px; align-items: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #f5f6f0; text-align: center; color: #5d6960; font-size: 11px; }
 .weekdays span:first-child { color: var(--brick); }
 .calendar-grid { border-left: 1px solid var(--line); }
-.day { display: block; min-width: 0; min-height: 94px; height: auto; padding: 8px 7px; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); color: var(--ink); text-align: left; vertical-align: top; overflow: visible; transition: background .12s ease; }
+.day { display: block; position: relative; min-width: 0; height: 94px; padding: 0 7px; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); color: var(--ink); text-align: left; vertical-align: top; overflow: hidden; transition: background .12s ease; }
 .day:hover { background: #f5f6f0; }
 .day.selected { position: relative; z-index: 1; background: #e7eee7; box-shadow: inset 0 0 0 2px var(--forest); }
 .day.empty { background: #f0f1eb; }
 .day:focus-visible { position: relative; z-index: 2; outline: 2px solid var(--brick); outline-offset: -3px; }
-.day-num { display: block; margin-bottom: 6px; color: #4d5850; font-size: 11px; }
+.day-num { position: absolute; top: 5px; left: 7px; z-index: 1; display: block; height: 15px; margin: 0; color: #4d5850; font-size: 11px; line-height: 15px; }
 .sunday .day-num { color: var(--brick); }
 .saturday .day-num { color: var(--blue); }
-.event-chip { display: block; margin: 3px 0; padding: 3px 5px; border-left: 2px solid var(--forest); background: var(--green-wash); color: #365143; font: 10px/1.45 var(--serif); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; word-break: keep-all; }
+.day-events { display: block; max-height: 67px; margin-top: 24px; overflow-y: auto; scrollbar-color: #aeb8af transparent; scrollbar-width: thin; }
+.day-events::-webkit-scrollbar { width: 4px; }
+.day-events::-webkit-scrollbar-thumb { border-radius: 99px; background: #aeb8af; }
+.event-chip { display: block; margin: 2px 0; padding: 2px 4px; border-left: 2px solid var(--forest); background: var(--green-wash); color: #365143; font: 9px/1.32 var(--event); letter-spacing: -.02em; white-space: normal; overflow-wrap: anywhere; word-break: keep-all; }
 .event-chip.exam { border-color: var(--brick); background: var(--brick-wash); color: #854b38; }
 .event-chip.holiday { border-color: var(--blue); background: var(--blue-wash); color: #466475; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 11px 17px; padding-top: 13px; color: var(--muted); font-size: 10px; }
