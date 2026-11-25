@@ -9,16 +9,20 @@
   const seasonNames = ['겨울의 시작','새 학기의 봄','꽃 피는 봄','초록의 봄','초여름','여름의 문턱','한여름','여름의 끝','가을의 시작','깊어지는 가을','겨울의 문턱','한 해의 끝'];
 
   // 한국 시간 기준 오늘. 해가 바뀌면 그 해 학사 일정을 자동으로 보여 줍니다(2027년이 되면 2027학년도).
-  const kst = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
-    .formatToParts(new Date()).reduce((date, part) => ({ ...date, [part.type]: part.value }), {});
-  const YEAR = Math.max(2026, Number(kst.year));
+  const kstToday = () => {
+    const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(new Date()).reduce((date, part) => ({ ...date, [part.type]: part.value }), {});
+    return `${p.year}-${p.month}-${p.day}`;
+  };
+  let today = kstToday();
+  const YEAR = Math.max(2026, Number(today.slice(0, 4)));
   const pad = n => String(n).padStart(2, '0');
   const dateISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const yearStart = `${YEAR}-01-01`, yearEnd = `${YEAR}-12-31`;
-  let selected = Number(kst.year) === YEAR ? `${kst.year}-${kst.month}-${kst.day}` : yearStart;
+  let selected = today.startsWith(`${YEAR}-`) ? today : yearStart;
   let month = Number(selected.slice(5, 7)) - 1;
   let events = [], editingId = null, session = null;
-  const today = `${kst.year}-${kst.month}-${kst.day}`;
+  const CACHE_KEY = 'changuiCalendarCache', CACHE_MS = 5 * 60 * 1000; // 같은 브라우저에서는 5분 동안 다시 읽지 않습니다(무료 읽기 한도 절약)
   let lastTap = { day: '', at: 0 }; // 같은 날짜를 짧은 간격으로 두 번 누르면 편집 (마우스 더블 클릭·휴대폰 두 번 탭 공통)
   const DOUBLE_TAP_MS = 450;
   const isAdmin = () => !!session && session.role === 'admin';
@@ -44,26 +48,39 @@
     return { id: d.name.split('/').pop(), start: v('start'), end: v('end'), title: v('title'), category: categoryOf(v('category')), updatedAt: (f.updatedAt && f.updatedAt.timestampValue) || '' };
   };
   const kstDate = t => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t)).replace(/\s/g, '').replace(/\.$/, '');
-  async function loadEvents() {
-    let list = null;
-    if (fb) {
-      try {
-        list = []; let pageToken = '';
-        do {
-          const r = await fetch(`${DOCS}/events?pageSize=300&key=${fb.apiKey}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`);
-          if (!r.ok) throw new Error(String(r.status));
-          const j = await r.json();
-          (j.documents || []).forEach(d => { const e = fromDoc(d); if (e.start && e.end && e.title) list.push(e); });
-          pageToken = j.nextPageToken || '';
-        } while (pageToken);
-      } catch { list = null; }
+  const readCache = () => {
+    try { const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); return c && c.year === YEAR && Array.isArray(c.events) ? c : null; } catch { return null; }
+  };
+  const writeCache = data => { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ year: YEAR, at: Date.now(), events: data.list, updatedAt: data.updatedAt })); } catch {} };
+  async function fetchEvents() {
+    // 올해 1월 1일 이후에 끝나는 일정만 읽습니다. 지난 해 일정이 쌓여도 읽는 양이 늘지 않습니다.
+    const r = await fetch(`${DOCS}:runQuery?key=${fb.apiKey}`, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: { from: [{ collectionId: 'events' }], where: { fieldFilter: { field: { fieldPath: 'end' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: yearStart } } } } }) });
+    if (!r.ok) throw new Error(String(r.status));
+    const list = (await r.json()).filter(x => x.document).map(x => fromDoc(x.document)).filter(e => e.start && e.end && e.title);
+    let updatedAt = '';
+    const m = await fetch(`${DOCS}/meta/site?key=${fb.apiKey}`);
+    if (m.ok) { const j = await m.json(); updatedAt = (j.fields && j.fields.updatedAt && j.fields.updatedAt.timestampValue) || ''; }
+    if (!updatedAt) updatedAt = list.reduce((a, e) => (e.updatedAt > a ? e.updatedAt : a), '');
+    return { list, updatedAt };
+  }
+  async function loadEvents(fresh = false) {
+    const cached = readCache();
+    let data = null;
+    if (!fresh && cached && Date.now() - cached.at < CACHE_MS) data = { list: cached.events, updatedAt: cached.updatedAt };
+    else if (fb) {
+      try { data = await fetchEvents(); writeCache(data); }
+      catch { if (cached) data = { list: cached.events, updatedAt: cached.updatedAt }; } // 연결이 안 되면 마지막으로 받은 일정
     }
-    events = list || JSON.parse($('initialEvents').textContent);
+    events = data ? data.list : JSON.parse($('initialEvents').textContent);
     $('eventCount').textContent = `${events.filter(inYear).length}개 일정`;
     renderDday();
-    const latest = list ? list.reduce((m, e) => (e.updatedAt > m ? e.updatedAt : m), '') : '';
+    const latest = data ? data.updatedAt : '';
     $('footerUpdated').hidden = !latest;
     if (latest) $('footerUpdated').textContent = `일정 업데이트 ${kstDate(latest)}`;
+  }
+  async function touchMeta() {
+    try { await authedFetch(`${DOCS}/meta/site?updateMask.fieldPaths=updatedAt`, { method: 'PATCH', body: JSON.stringify({ fields: { updatedAt: { timestampValue: new Date().toISOString() } } }) }); } catch {}
   }
   const eventFields = e => ({ fields: {
     start: { stringValue: e.start }, end: { stringValue: e.end }, title: { stringValue: e.title },
@@ -170,10 +187,10 @@
       const date = new Date(YEAR, month, n), day = dateISO(date), dayEvents = events.filter(e => isWithin(e, day));
       const cell = document.createElement('button');
       cell.type = 'button';
-      cell.className = `day${date.getDay() === 0 ? ' sunday' : ''}${date.getDay() === 6 ? ' saturday' : ''}${day === selected ? ' selected' : ''}${dayEvents.length ? ' has-event' : ''}`;
+      cell.className = `day${date.getDay() === 0 ? ' sunday' : ''}${date.getDay() === 6 ? ' saturday' : ''}${day === selected ? ' selected' : ''}${day === today ? ' today' : ''}${dayEvents.length ? ' has-event' : ''}`;
       cell.dataset.date = day;
-      cell.setAttribute('role', 'gridcell');
-      cell.setAttribute('aria-selected', String(day === selected));
+      cell.setAttribute('aria-pressed', String(day === selected));
+      if (day === today) cell.setAttribute('aria-current', 'date');
       cell.setAttribute('aria-label', `${month + 1}월 ${n}일${dayEvents.length ? `, 일정 ${dayEvents.length}개` : ''}`);
       cell.innerHTML = `<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e => `<span class="event-chip ${categoryOf(e.category)}" data-id="${escapeHTML(e.id || '')}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
       cell.addEventListener('click', ev => {
@@ -230,6 +247,8 @@
     resetForm(); $('passwordForm').reset(); $('passwordMessage').textContent = '';
     renderManageList();
     if (!$('adminDialog').open) $('adminDialog').showModal();
+    // 관리 창을 열 때는 저장된 사본 대신 최신 일정을 다시 받아 옵니다(다른 관리자가 고친 내용 반영).
+    loadEvents(true).then(() => { render(); renderManageList(); });
   }
   function renderManageList() {
     const rows = monthEvents();
@@ -262,7 +281,8 @@
   }
   async function afterChange(message) {
     const s = $('eventStart').value;
-    await loadEvents();
+    await touchMeta();
+    await loadEvents(true);
     if (s && s.startsWith(`${YEAR}-`)) { month = Number(s.slice(5, 7)) - 1; selected = s; }
     render(); resetForm(message); renderManageList();
   }
@@ -342,6 +362,17 @@
       $('passwordForm').reset(); msg.textContent = '비밀번호를 바꿨습니다. 다음 로그인부터 새 비밀번호를 쓰세요.';
     } catch (e) { msg.textContent = /INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD/.test(e.message) ? '현재 비밀번호가 맞지 않습니다.' : authError(e.message); }
   });
+
+  // 페이지를 켜 둔 채 날짜가 바뀌면 D-day와 '오늘' 표시를 새로 고칩니다. 해가 바뀌면 새 해 달력으로 다시 엽니다.
+  function checkDay() {
+    const now = kstToday();
+    if (now === today) return;
+    if (Number(now.slice(0, 4)) > YEAR) { if (!document.querySelector('dialog[open]')) location.reload(); return; }
+    today = now; render(); renderDday();
+  }
+  setInterval(checkDay, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDay(); });
+  window.addEventListener('focus', checkDay);
 
   (async () => {
     await loadEvents();

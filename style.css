@@ -130,6 +130,9 @@ button.day:hover { background: var(--sub); }
 .selected .day-num { color: var(--forest-deep); font-weight: 700; }
 .sunday .day-num { color: var(--brick); }
 .saturday .day-num { color: var(--blue); }
+.day.today .day-num { color: var(--forest-deep); font-weight: 700; }
+.day.today .day-num::after { margin-left: 4px; color: var(--forest); font-size: 10px; font-weight: 400; content: "오늘"; }
+@media (max-width: 400px) { .day.today .day-num::after { content: none; } .day.today .day-num { text-decoration: underline; text-underline-offset: 3px; } }
 .day-events { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .event-chip { display: block; min-width: 0; padding: 3px 5px; border-left: 3px solid var(--forest); border-radius: 2px; background: var(--green-wash); color: #365143; font: var(--chip-size)/1.35 var(--event); letter-spacing: -.02em; overflow-wrap: anywhere; word-break: keep-all; }
 .event-chip.exam { border-color: var(--brick); background: var(--brick-wash); color: #854b38; }

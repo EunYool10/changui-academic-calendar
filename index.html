@@ -7,8 +7,8 @@
   <meta name="description" content="창의경영고등학교 학사 일정 달력">
   <title>창의경영고등학교 · 학사 달력</title>
   <link rel="icon" type="image/svg+xml" href="calendar.svg">
-  <link rel="stylesheet" href="style.css?v=20261125-6">
-  <script src="config.js?v=20261125-6"></script>
+  <link rel="stylesheet" href="style.css?v=20261126-1">
+  <script src="config.js?v=20261126-1"></script>
   <script id="initialEvents" type="application/json">[
     {"start":"2026-01-02","end":"2026-01-02","title":"졸업식, 종업식","category":"school"},
     {"start":"2026-03-03","end":"2026-03-03","title":"입학식, 개학식","category":"school"},
@@ -20,7 +20,7 @@
     {"start":"2026-05-01","end":"2026-05-01","title":"노동절","category":"holiday"},
     {"start":"2026-05-04","end":"2026-05-04","title":"개교기념일(재량휴업일)","category":"holiday"},
     {"start":"2026-05-08","end":"2026-05-08","title":"주제별체험학습(1,3학년)","category":"school"},
-    {"start":"2026-05-25","end":"2026-05-25","title":"부천님오신날 대체휴일","category":"holiday"},
+    {"start":"2026-05-25","end":"2026-05-25","title":"부처님오신날 대체휴일","category":"holiday"},
     {"start":"2026-06-02","end":"2026-06-02","title":"직업기초능력평가(1학년)","category":"exam"},
     {"start":"2026-06-03","end":"2026-06-03","title":"2026 지방선거일","category":"holiday"},
     {"start":"2026-06-04","end":"2026-06-04","title":"대수능모의평가(3학년)","category":"exam"},
@@ -46,7 +46,7 @@
     {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
     {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
   ]</script>
-  <script defer src="app.js?v=20261125-6"></script>
+  <script defer src="app.js?v=20261126-1"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -60,7 +60,7 @@
     <section id="calendar" class="calendar-section" aria-label="월별 학사 일정">
       <div class="calendar-head"><div><p class="eyebrow" id="monthKicker">학년도</p><h2><span id="monthNumber">01</span><small>월</small></h2></div><div class="month-controls"><button id="prevMonth" class="arrow" type="button" aria-label="이전 달">←</button><label class="month-select-wrap"><span class="sr-only">월 선택</span><select id="monthSelect" class="month-select" aria-label="월 선택"></select></label><button id="nextMonth" class="arrow" type="button" aria-label="다음 달">→</button></div></div>
       <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
-      <div id="calendarGrid" class="calendar-grid" role="grid" aria-label="학사 일정"></div>
+      <div id="calendarGrid" class="calendar-grid" role="group" aria-label="학사 일정"></div>
       <div class="legend"><span><i class="dot exam"></i> 시험</span><span><i class="dot school"></i> 학교 일정</span><span><i class="dot holiday"></i> 휴일·방학</span><span class="legend-note" id="legendNote">날짜를 선택하면 해당 일정이 표시됩니다.</span></div>
     </section>
     </div>

@@ -19,7 +19,7 @@
 - 보안 규칙은 `firestore.rules`에 있습니다. 바꾼 뒤에는 Firebase에 다시 배포해야 적용됩니다.
 - `config.js`의 Firebase 웹 설정 값은 공개 식별자라서 저장소에 있어도 됩니다.
 
-Firestore에 연결할 수 없을 때는 `index.html`에 들어 있는 2026학년도 기본 일정 35건을 대신 보여 줍니다.
+Firestore에 연결할 수 없을 때는 그 브라우저가 마지막으로 받은 일정을, 그것도 없으면 `index.html`에 들어 있는 2026학년도 기본 일정 35건을 보여 줍니다. 같은 브라우저에서는 일정을 5분 동안 저장해 두고 다시 읽지 않아 Firestore 무료 읽기 한도를 아낍니다.
 
 ### 관리자 추가하기
 
@@ -33,7 +33,6 @@ Firestore에 연결할 수 없을 때는 `index.html`에 들어 있는 2026학�
 - 머리글 오른쪽: 다음 일정 D-day와 이어지는 일정 2개 (한국 시간 기준)
 - `config.js`: Firebase 웹 설정
 - `firestore.rules`: Firestore 보안 규칙
-- `events.json`: 2026학년도 일정 원본 35건
 - `calendar.svg`: 파비콘
 
 ## 개인정보 안내

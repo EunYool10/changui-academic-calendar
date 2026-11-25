@@ -29,6 +29,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // meta/site.updatedAt: 일정을 추가·수정·삭제할 때마다 관리자가 남기는 마지막 수정 시각(바닥글 표시용)
+    match /meta/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && docId == 'site'
+        && request.resource.data.keys().hasOnly(['updatedAt'])
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if false;
+    }
+
     match /staff/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow list, write: if false;
