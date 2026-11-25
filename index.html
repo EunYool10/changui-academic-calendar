@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="창의경영고등학교 2026학년도 학사 일정 달력">
+  <title>창의경영고등학교 · 2026 학사 달력</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="calendar.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script id="initialEvents" type="application/json">[
+    {"start":"2026-01-02","end":"2026-01-02","title":"졸업식, 종업식","category":"school"},
+    {"start":"2026-03-03","end":"2026-03-03","title":"입학식, 개학식","category":"school"},
+    {"start":"2026-03-11","end":"2026-03-11","title":"기초학력진단평가","category":"exam"},
+    {"start":"2026-03-20","end":"2026-03-20","title":"학부모총회","category":"school"},
+    {"start":"2026-03-26","end":"2026-03-28","title":"주제별체험학습(2학년)","category":"school"},
+    {"start":"2026-03-30","end":"2026-03-30","title":"재량휴업일(2학년)","category":"holiday"},
+    {"start":"2026-04-23","end":"2026-04-24","title":"1학기 1차 정기시험(1,2학년)","category":"exam"},
+    {"start":"2026-05-01","end":"2026-05-01","title":"노동절","category":"holiday"},
+    {"start":"2026-05-04","end":"2026-05-04","title":"개교기념일(재량휴업일)","category":"holiday"},
+    {"start":"2026-05-08","end":"2026-05-08","title":"주제별체험학습(1,3학년)","category":"school"},
+    {"start":"2026-05-25","end":"2026-05-25","title":"부천님오신날 대체휴일","category":"holiday"},
+    {"start":"2026-06-02","end":"2026-06-02","title":"직업기초능력평가(1학년)","category":"exam"},
+    {"start":"2026-06-03","end":"2026-06-03","title":"2026 지방선거일","category":"holiday"},
+    {"start":"2026-06-04","end":"2026-06-04","title":"대수능모의평가(3학년)","category":"exam"},
+    {"start":"2026-06-11","end":"2026-06-11","title":"경기도 상업경진 페스티벌(금요일 시간표 운영)","category":"school"},
+    {"start":"2026-06-16","end":"2026-06-16","title":"직업기초능력평가(2학년)","category":"exam"},
+    {"start":"2026-06-25","end":"2026-06-26","title":"1학기 2차 정기시험(1~3학년)","category":"exam"},
+    {"start":"2026-06-29","end":"2026-06-30","title":"1학기 2차 정기시험(1,2학년)","category":"exam"},
+    {"start":"2026-07-01","end":"2026-07-01","title":"월요일 시간표 운영","category":"school"},
+    {"start":"2026-07-07","end":"2026-07-09","title":"직업기초능력평가(3학년)","category":"exam"},
+    {"start":"2026-07-16","end":"2026-07-16","title":"방학식","category":"holiday"},
+    {"start":"2026-08-10","end":"2026-08-10","title":"개학식","category":"school"},
+    {"start":"2026-09-02","end":"2026-09-02","title":"대수능모의평가(3학년)","category":"exam"},
+    {"start":"2026-10-01","end":"2026-10-02","title":"2학기 1차 정기시험(1,2학년)","category":"exam"},
+    {"start":"2026-10-07","end":"2026-10-07","title":"내가 만드는 나의 교육과정(1학년)","category":"school"},
+    {"start":"2026-11-18","end":"2026-11-18","title":"수학능력시험 예비소집일","category":"school"},
+    {"start":"2026-11-19","end":"2026-11-19","title":"대학수학능력시험(재량휴업일)","category":"holiday"},
+    {"start":"2026-12-03","end":"2026-12-04","title":"2학기 2차 정기시험(1,2학년)","category":"exam"},
+    {"start":"2026-12-07","end":"2026-12-08","title":"2학기 2차 정기시험(1,2학년)","category":"exam"},
+    {"start":"2026-12-18","end":"2026-12-18","title":"은행제","category":"school"},
+    {"start":"2026-12-21","end":"2026-12-21","title":"학생회장선거","category":"school"},
+    {"start":"2026-12-22","end":"2026-12-22","title":"교내경진대회(목요일 시간표 운영)","category":"school"},
+    {"start":"2026-12-23","end":"2026-12-23","title":"금요일 시간표 운영","category":"school"},
+    {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
+    {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
+  ]</script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <nav class="main-nav" aria-label="주 메뉴"><a href="#calendar">학사 달력</a><a href="#agenda">선택한 날짜 일정</a><button id="termsNav" type="button">개인정보 안내</button></nav>
+      <div class="top-actions"><button id="loginBtn" class="quiet-button" hidden>교직원 로그인</button><button id="adminBtn" class="solid-button" hidden>일정 관리</button><button id="logoutBtn" class="quiet-button" hidden>로그아웃</button></div>
+    </header>
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">창의경영고등학교 · 2026학년도</p><h1>2026학년도<br><span>학사 일정</span></h1><p class="intro">달을 넘겨 날짜별 일정을 확인하세요.</p><div class="hero-meta"><span>1월 — 12월</span><span>·</span><span id="eventCount">35개 일정</span></div></div>
+      <div class="season-art" id="seasonArt" aria-hidden="true"></div>
+    </section>
+    <div class="calendar-layout">
+    <section id="agenda" class="agenda-section"><div class="agenda-title"><div><p class="eyebrow">날짜별 안내</p><h3 id="agendaHeading">1월 일정</h3></div><span id="agendaDate" class="agenda-date">월을 선택해 주세요</span></div><div id="agendaList" class="agenda-list"></div></section>
+    <section id="calendar" class="calendar-section" aria-label="월별 학사 일정">
+      <div class="calendar-head"><div><p class="eyebrow" id="monthKicker">THE SCHOOL YEAR</p><h2><span id="monthNumber">01</span><small>월</small></h2></div><div class="month-controls"><button id="prevMonth" class="arrow" aria-label="이전 달">←</button><span id="monthLabel">JANUARY</span><button id="nextMonth" class="arrow" aria-label="다음 달">→</button></div></div>
+      <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <div class="legend"><span><i class="dot exam"></i> 시험</span><span><i class="dot school"></i> 학교 일정</span><span><i class="dot holiday"></i> 휴일·방학</span><span class="legend-note">날짜를 선택하면 해당 일정이 표시됩니다.</span></div>
+    </section>
+    </div>
+    <footer><span>CHANGUI BUSINESS HIGH SCHOOL</span><span>2026 ACADEMIC CALENDAR</span><button id="termsBtn">개인정보 처리 안내</button></footer>
+  </main>
+  <dialog id="loginDialog" class="dialog"><form id="loginForm" class="dialog-card"><button type="button" class="close" data-close>×</button><p class="eyebrow">STAFF ACCESS</p><h2>교직원 로그인</h2><p class="dialog-copy">학교에서 발급한 계정으로 로그인해 주세요.</p><label>이메일<input type="email" id="email" autocomplete="username" required></label><label>비밀번호<input type="password" id="password" autocomplete="current-password" required></label><label class="checkline"><input type="checkbox" id="termsAgree" required><span><button type="button" class="text-link" id="termsInline">개인정보 처리 안내</button>를 확인했습니다.</span></label><p id="loginMessage" class="form-message" role="status"></p><button class="solid-button wide" type="submit">로그인</button><p class="fine-print">계정 생성은 학교 관리자에게 문의해 주세요.</p></form></dialog>
+  <dialog id="adminDialog" class="dialog"><form id="eventForm" class="dialog-card manage-card"><button type="button" class="close" data-close>×</button><p class="eyebrow">STAFF DESK</p><h2>학사 일정 관리</h2><p id="roleNote" class="dialog-copy"></p><div class="form-grid"><label>일정명<input id="eventTitle" maxlength="100" required placeholder="일정 이름"></label><label>분류<select id="eventCategory"><option value="school">학교 일정</option><option value="exam">시험</option><option value="holiday">휴일·방학</option></select></label><label>시작일<input type="date" id="eventStart" required></label><label>종료일<input type="date" id="eventEnd" required></label></div><div class="form-actions"><button type="button" id="deleteEvent" class="delete-button" hidden>선택 일정 삭제</button><span class="spacer"></span><button type="button" class="quiet-button" data-close>취소</button><button class="solid-button" type="submit">일정 저장</button></div><p id="saveMessage" class="form-message" role="status"></p><div class="manage-list-title">이 달의 일정 <span id="manageCount"></span></div><div id="manageList" class="manage-list"></div></form></dialog>
+  <dialog id="termsDialog" class="dialog"><div class="dialog-card terms-card"><button type="button" class="close" data-close>×</button><p class="eyebrow">INFORMATION</p><h2>개인정보 처리 안내</h2><div class="terms-body"><h3>1. 처리 목적</h3><p>교직원 로그인 확인 및 학사 일정 관리 권한 부여에 필요한 계정 정보를 인증 서비스에서 처리합니다.</p><h3>2. 처리 항목</h3><p>로그인 이메일과 인증 정보가 처리됩니다. 비밀번호는 이 웹사이트가 저장하거나 열람하지 않으며 인증 제공자가 관리합니다.</p><h3>3. 보유 기간</h3><p>계정은 학교 관리자가 권한을 회수하거나 삭제할 때까지 유지됩니다. 일정 데이터에는 개인 식별 정보를 입력하지 않습니다.</p><h3>4. 이용자 권리 및 문의</h3><p>계정 열람·정정·삭제 요청은 학교 관리자에게 문의해 주세요. 본 안내는 서비스 운영을 위한 안내문이며, 학교의 공식 개인정보 처리방침을 대체하지 않습니다.</p><h3>5. 외부 서비스</h3><p>로그인 및 일정 저장 기능을 켠 경우 Supabase 인증 및 데이터베이스가 사용됩니다. 서비스 운영 전 학교의 개인정보 담당자 검토가 필요합니다.</p></div><button class="solid-button wide" data-close>확인</button></div></dialog>
+</body>
+</html>
