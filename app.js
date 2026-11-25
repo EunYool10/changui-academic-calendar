@@ -18,6 +18,9 @@
   let selected = Number(kst.year) === YEAR ? `${kst.year}-${kst.month}-${kst.day}` : yearStart;
   let month = Number(selected.slice(5, 7)) - 1;
   let events = [], shownArt = -1, editingId = null, session = null;
+  let lastTap = { day: '', at: 0 }; // 같은 날짜를 짧은 간격으로 두 번 누르면 편집 (마우스 더블 클릭·휴대폰 두 번 탭 공통)
+  const DOUBLE_TAP_MS = 450;
+  const isAdmin = () => !!session && session.role === 'admin';
 
   const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const categoryOf = c => (CATEGORY_NAMES[c] ? c : 'school');
@@ -30,15 +33,16 @@
   function applyYear() {
     document.title = `창의경영고등학교 · ${YEAR} 학사 달력`;
     $('heroYear').textContent = String(YEAR);
-    $('footerYear').textContent = `창의경영고등학교 · ${YEAR}학년도`;
+    $('footerYear').textContent = `${YEAR}학년도`;
     $('monthSelect').innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i}">${i + 1}월</option>`).join('');
   }
 
   /* ---------- 일정 데이터 (Firestore REST) ---------- */
   const fromDoc = d => {
     const f = d.fields || {}, v = k => (f[k] && f[k].stringValue) || '';
-    return { id: d.name.split('/').pop(), start: v('start'), end: v('end'), title: v('title'), category: categoryOf(v('category')) };
+    return { id: d.name.split('/').pop(), start: v('start'), end: v('end'), title: v('title'), category: categoryOf(v('category')), updatedAt: (f.updatedAt && f.updatedAt.timestampValue) || '' };
   };
+  const kstDate = t => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t)).replace(/\s/g, '').replace(/\.$/, '');
   async function loadEvents() {
     let list = null;
     if (fb) {
@@ -55,6 +59,9 @@
     }
     events = list || JSON.parse($('initialEvents').textContent);
     $('eventCount').textContent = `${events.filter(inYear).length}개 일정`;
+    const latest = list ? list.reduce((m, e) => (e.updatedAt > m ? e.updatedAt : m), '') : '';
+    $('footerUpdated').hidden = !latest;
+    if (latest) $('footerUpdated').textContent = `일정 업데이트 ${kstDate(latest)}`;
   }
   const eventFields = e => ({ fields: {
     start: { stringValue: e.start }, end: { stringValue: e.end }, title: { stringValue: e.title },
@@ -135,10 +142,12 @@
     catch { signOut(); }
   }
   function showAuth() {
-    const isAdmin = !!session && session.role === 'admin';
+    const admin = isAdmin();
     $('loginBtn').hidden = !!session;
     $('logoutBtn').hidden = !session;
-    $('adminBtn').hidden = !isAdmin;
+    $('adminBtn').hidden = !admin;
+    document.body.classList.toggle('is-admin', admin);
+    $('legendNote').textContent = admin ? '날짜나 일정을 두 번 누르면 바로 추가·수정할 수 있습니다.' : '날짜를 선택하면 해당 일정이 표시됩니다.';
   }
 
   /* ---------- 화면 ---------- */
@@ -165,8 +174,15 @@
       cell.setAttribute('role', 'gridcell');
       cell.setAttribute('aria-selected', String(day === selected));
       cell.setAttribute('aria-label', `${month + 1}월 ${n}일${dayEvents.length ? `, 일정 ${dayEvents.length}개` : ''}`);
-      cell.innerHTML = `<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e => `<span class="event-chip ${categoryOf(e.category)}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
-      cell.addEventListener('click', () => { selected = day; render(); focusSelected(); });
+      cell.innerHTML = `<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e => `<span class="event-chip ${categoryOf(e.category)}" data-id="${escapeHTML(e.id || '')}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
+      cell.addEventListener('click', ev => {
+        const now = Date.now(), chip = ev.target.closest('.event-chip');
+        const isDouble = lastTap.day === day && now - lastTap.at < DOUBLE_TAP_MS;
+        lastTap = { day, at: isDouble ? 0 : now };
+        selected = day;
+        if (isDouble && isAdmin()) { openEditor(day, chip ? chip.dataset.id : ''); return; }
+        render(); focusSelected();
+      });
       grid.append(cell);
     }
     for (let i = first.getDay() + days; i % 7; i++) blank();
@@ -205,17 +221,28 @@
     $('manageCount').textContent = `${rows.length}건`;
     $('manageList').innerHTML = rows.length ? rows.map((e, i) => `<button type="button" class="manage-row${e.id && e.id === editingId ? ' active' : ''}" data-index="${i}"><span>${shortDate(e.start)}${e.end !== e.start ? `—${shortDate(e.end)}` : ''}</span><b>${escapeHTML(e.title)}</b><span>${e.id ? '고치기' : ''}</span></button>`).join('')
       : '<p class="empty-agenda">이 달에는 일정이 없습니다.</p>';
-    $('manageList').querySelectorAll('.manage-row').forEach(btn => btn.addEventListener('click', () => {
-      const e = rows[Number(btn.dataset.index)];
-      if (!e.id) { $('saveMessage').textContent = '저장소에 연결되지 않은 기본 일정은 고칠 수 없습니다.'; return; }
-      editingId = e.id;
-      $('eventTitle').value = e.title; $('eventCategory').value = categoryOf(e.category);
-      $('eventStart').value = e.start; $('eventEnd').value = e.end;
-      $('deleteEvent').hidden = false; $('newEvent').hidden = false;
-      $('saveEvent').textContent = '수정 저장';
-      $('saveMessage').textContent = '선택한 일정을 고치는 중입니다.';
-      renderManageList();
-    }));
+    $('manageList').querySelectorAll('.manage-row').forEach(btn => btn.addEventListener('click', () => startEdit(rows[Number(btn.dataset.index)])));
+  }
+  function startEdit(e) {
+    if (!e.id) { $('saveMessage').textContent = '저장소에 연결되지 않은 기본 일정은 고칠 수 없습니다.'; return; }
+    editingId = e.id;
+    $('eventTitle').value = e.title; $('eventCategory').value = categoryOf(e.category);
+    $('eventStart').value = e.start; $('eventEnd').value = e.end;
+    $('deleteEvent').hidden = false; $('newEvent').hidden = false;
+    $('saveEvent').textContent = '수정 저장';
+    $('saveMessage').textContent = '선택한 일정을 고치는 중입니다.';
+    renderManageList();
+  }
+  // 달력에서 두 번 누른 경우: 일정을 눌렀으면 그 일정, 일정이 하나뿐인 날이면 그 일정, 아니면 그 날짜로 새 일정
+  function openEditor(day, eventId) {
+    render();
+    openManage();
+    const dayEvents = events.filter(e => isWithin(e, day) && e.id);
+    const target = events.find(e => eventId && e.id === eventId) || (dayEvents.length === 1 ? dayEvents[0] : null);
+    if (target) startEdit(target);
+    else if (dayEvents.length > 1) $('saveMessage').textContent = `이 날 일정이 ${dayEvents.length}개 있습니다. 고칠 일정은 달력에서 그 일정을 두 번 누르거나 아래 목록에서 고르세요.`;
+    else $('saveMessage').textContent = `${Number(day.slice(5, 7))}월 ${Number(day.slice(8))}일에 새 일정을 추가합니다.`;
+    setTimeout(() => $('eventTitle').focus(), 0);
   }
   async function afterChange(message) {
     const s = $('eventStart').value;
