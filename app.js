@@ -3,9 +3,9 @@
   const client = cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
   const $ = id => document.getElementById(id);
-  const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
   const seasonNames = ['겨울의 시작','새 학기의 봄','꽃 피는 봄','초록의 봄','초여름','여름의 문턱','한여름','여름의 끝','가을의 시작','깊어지는 가을','겨울의 문턱','한 해의 끝'];
   let month = 0, selected = '2026-01-02', events = [], session = null, role = null, editingId = null;
+  $('monthSelect').innerHTML = Array.from({length:12},(_,i)=>`<option value="${i}">${i+1}월</option>`).join('');
   const dateISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const isWithin = (e, iso) => e.start <= iso && iso <= e.end;
   const monthEvents = () => events.filter(e => Number(e.start.slice(5,7)) === month+1 || Number(e.end.slice(5,7)) === month+1);
@@ -19,21 +19,29 @@
     $('eventCount').textContent = `${events.length}개 일정`;
   }
   function render() {
-    $('monthNumber').textContent = String(month+1).padStart(2,'0'); $('monthLabel').textContent = `${month+1}월 달력`;
-    $('monthKicker').textContent = `2026 · ${seasonNames[month]}`;
-    const winter=[0,11].includes(month), spring=[2,3,4].includes(month), summer=[5,6,7].includes(month);
-    const palette=winter?['#e7edf0','#b8cbd1','#f9fbfa']:spring?['#f1e7d9','#b8c9a3','#d99483']:summer?['#e8e8cd','#97b38a','#d5ae66']:['#eee4d3','#a1af85','#c47b52'];
-    const leaves = winter ? '<path d="M56 130 83 97m-20 47 31-20m-11 40 24-29m-4 38 34-34m-19 43 31-32" stroke="#728b8d" stroke-width="2"/><circle cx="80" cy="96" r="3" fill="#f8faf8"/><circle cx="94" cy="122" r="3" fill="#f8faf8"/><circle cx="127" cy="136" r="3" fill="#f8faf8"/>' : spring ? '<circle cx="73" cy="109" r="5" fill="#dfa590"/><circle cx="92" cy="88" r="5" fill="#e8c58c"/><circle cx="115" cy="119" r="5" fill="#d68d83"/><circle cx="139" cy="104" r="4" fill="#e3bb79"/><circle cx="158" cy="132" r="5" fill="#d68d83"/>' : summer ? '<circle cx="68" cy="105" r="9" fill="#e6bd69"/><circle cx="100" cy="83" r="9" fill="#769573"/><circle cx="133" cy="111" r="10" fill="#e7c16d"/><circle cx="165" cy="96" r="9" fill="#729270"/>' : '<path d="M64 115q12-18 22 0m3-18q12-18 22 0m4 29q12-18 22 0m7-30q12-18 22 0m0 37q12-18 22 0" fill="none" stroke="#bd7960" stroke-width="4" stroke-linecap="round"/>';
-    $('seasonArt').innerHTML=`<svg viewBox="0 0 300 220" width="300" height="220" xmlns="http://www.w3.org/2000/svg"><ellipse cx="163" cy="111" rx="111" ry="83" fill="${palette[0]}"/><circle cx="224" cy="70" r="19" fill="${palette[2]}" opacity=".8"/><path d="M38 160q58-51 111-5t115-6v57H38Z" fill="${palette[1]}"/><path d="M30 181q62-31 119 0t123-3v27H30Z" fill="#d6d8c5" opacity=".7"/><path d="M84 166V104m0 27 25-27m-25 42-20-19m71 47V91m0 33 23-28m-23 49-22-21m67 44v-55m0 22 18-18" fill="none" stroke="#657965" stroke-width="3" stroke-linecap="round"/>${leaves}<path d="M40 53q13-14 27 0m163 91q11-12 22 0" fill="none" stroke="#89968b" stroke-width="2" stroke-linecap="round"/><path d="M48 202q50-8 94 0t112-1" fill="none" stroke="#aab39d" stroke-width="1.5"/></svg>`;
+    $('monthNumber').textContent = String(month+1).padStart(2,'0'); $('monthSelect').value = String(month);
+    $('monthKicker').textContent = `2026학년도 · ${seasonNames[month]}`;
+    $('calendarGrid').setAttribute('aria-label',`2026년 ${month+1}월 학사 일정`);
+    $('prevMonth').disabled = month === 0; $('nextMonth').disabled = month === 11;
+    const season = [0,11].includes(month) ? 'winter' : [2,3,4].includes(month) ? 'spring' : [5,6,7].includes(month) ? 'summer' : 'autumn';
+    const drawings = {
+      winter: ['#e7edeb','#607e83','<path d="M65 159q43-27 80-67m-56 47-7-36m25 22 1-39m-17 76 36-8m-22-36 28-4"/><path d="m206 88 0 20m-9-10h18m-15-7 12 14m0-14-12 14"/><path d="M96 61v10m-5-5h10m-8-4 6 8m0-8-6 8"/>'],
+      spring: ['#f1e8dc','#9b6a58','<path d="M78 168q19-40 49-72m-30 43-22-4m35-16 2-25m-4 33 26-5m-1 43q22-37 52-58m-26 29-19-4m34-11 2-23"/><path d="M122 87q-9-8 0-16 8 7 0 16Zm0-17q-8-8 0-16 8 8 0 16Zm-10 7q-9-8-16 0 7 9 16 0Zm20 0q9-8 16 0-7 9-16 0Z"/><circle cx="122" cy="77" r="3"/><path d="M181 105q-8-7 0-14 7 7 0 14Zm0-15q-7-7 0-14 7 7 0 14Zm-9 7q-7-7-14 0 7 7 14 0Zm18 0q7-7 14 0-7 7-14 0Z"/><circle cx="181" cy="98" r="3"/>'],
+      summer: ['#edead8','#5c7658','<path d="M71 169q42-39 71-94m-42 55q-34-5-37-32 25-4 41 21m8-17q-1-34 24-47 13 26-9 49m5 31q-2-38 27-54 11 30-13 55m-3-31q27-9 45 8-15 20-38 11"/><path d="M208 79v20m-10-10h20m-17-7 14 14m0-14-14 14"/><path d="M230 123q11-11 22 0m-11-11v23"/>'],
+      autumn: ['#eee3d6','#a35d46','<path d="M74 167q42-36 91-86m-63 60q-31 1-39-23 25-10 44 8m17-24q-3-28 20-41 16 24-6 45m10 3q25-13 44 1-12 22-38 16"/><path d="M186 68q-2-19 14-28 13 16-2 31m17 47q11-12 23-2-5 15-19 12m-77-69q-12-10-6-24 16 5 13 20"/><path d="M56 184q56-9 110 0t82-1"/>']
+    };
+    const [wash,ink,drawing] = drawings[season];
+    $('seasonArt').innerHTML=`<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M39 183q16-77 99-106 79-27 134 26 31 30 0 80-52 24-135 8-63 12-98-8Z" fill="${wash}"/><path d="M47 183q49-9 98 1t119-1" fill="none" stroke="#b9b6a8" stroke-width="1.5"/><g fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${drawing}</g></svg>`;
     $('calendarGrid').innerHTML = '';
     const first = new Date(2026,month,1), days = new Date(2026,month+1,0).getDate();
     for (let i=0;i<first.getDay();i++) { const blank=document.createElement('div'); blank.className='day empty'; blank.setAttribute('aria-hidden','true'); $('calendarGrid').append(blank); }
     for(let n=1;n<=days;n++) {
       const date=new Date(2026,month,n), iso=dateISO(date), dayEvents=events.filter(e=>isWithin(e,iso));
       const cell=document.createElement('button'); cell.type='button'; cell.className=`day${date.getDay()===0?' sunday':''}${date.getDay()===6?' saturday':''}${iso===selected?' selected':''}${dayEvents.length?' has-event':''}`;
+      cell.dataset.date=iso; cell.setAttribute('role','gridcell'); cell.setAttribute('aria-selected',String(iso===selected));
       cell.setAttribute('aria-label',`${month+1}월 ${n}일${dayEvents.length?`, 일정 ${dayEvents.length}개`:''}`);
       cell.innerHTML=`<span class="day-num">${n}</span>${dayEvents.map(e=>`<span class="event-chip ${escapeHTML(e.category)}">${escapeHTML(e.title)}</span>`).join('')}`;
-      cell.addEventListener('click',()=>{selected=iso;render();}); $('calendarGrid').append(cell);
+      cell.addEventListener('click',()=>{selected=iso;render();$('calendarGrid').querySelector(`[data-date="${selected}"]`)?.focus({preventScroll:true});}); $('calendarGrid').append(cell);
     }
     renderAgenda();
   }
@@ -43,7 +51,7 @@
     const found=events.filter(e=>isWithin(e,selected));
     $('agendaList').innerHTML=found.length ? found.map(e=>`<article class="agenda-item"><span class="agenda-marker ${escapeHTML(e.category)}"></span><div><span class="agenda-range">${e.start===e.end?e.start.slice(5).replace('-','.'):`${e.start.slice(5).replace('-','.')} — ${e.end.slice(5).replace('-','.')}`}</span><h4>${escapeHTML(e.title)}</h4></div><span class="category-label">${{exam:'시험',school:'학교 일정',holiday:'휴일·방학'}[e.category]||'학교 일정'}</span></article>`).join('') : '<div class="empty-agenda">등록된 일정이 없는 날입니다.</div>';
   }
-  function setMonth(next) { month=Math.max(0,Math.min(11,next)); selected=`2026-${String(month+1).padStart(2,'0')}-01`; render(); }
+  function setMonth(next) { month=Math.max(0,Math.min(11,next)); selected=`2026-${String(month+1).padStart(2,'0')}-01`; render();$('calendarGrid').querySelector(`[data-date="${selected}"]`)?.focus({preventScroll:true}); }
   function updateSession(user) {
     session=user; role=null;
     if (!user || !client) { showAuth(); return; }
@@ -65,6 +73,14 @@
     $('manageList').querySelectorAll('.manage-row').forEach((btn,i)=>btn.addEventListener('click',()=>{const e=rows[i];editingId=e.id; $('eventTitle').value=e.title;$('eventCategory').value=e.category;$('eventStart').value=e.start;$('eventEnd').value=e.end;$('deleteEvent').hidden=!e.id;$('saveMessage').textContent='선택한 일정을 수정합니다.';}));
   }
   $('prevMonth').addEventListener('click',()=>setMonth(month-1)); $('nextMonth').addEventListener('click',()=>setMonth(month+1));
+  $('monthSelect').addEventListener('change',ev=>setMonth(Number(ev.target.value)));
+  $('calendarGrid').addEventListener('keydown',ev=>{
+    const current=ev.target.closest('[data-date]'); if(!current) return;
+    const offset={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[ev.key]; if(!offset) return;
+    ev.preventDefault(); const target=new Date(`${current.dataset.date}T00:00:00`); target.setDate(target.getDate()+offset);
+    if(target.getFullYear()!==2026) return;
+    month=target.getMonth(); selected=dateISO(target); render(); $('calendarGrid').querySelector(`[data-date="${selected}"]`)?.focus({preventScroll:true});
+  });
   $('loginBtn').addEventListener('click',()=>client&&$('loginDialog').showModal()); $('adminBtn').addEventListener('click',openManage);
   $('logoutBtn').addEventListener('click',async()=>{await client?.auth.signOut();updateSession(null);});
   $('termsBtn').addEventListener('click',()=>$('termsDialog').showModal()); $('termsInline').addEventListener('click',()=>$('termsDialog').showModal());
