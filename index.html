@@ -21,7 +21,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="학사 달력">
-  <link rel="stylesheet" href="style.css?v=20261127-2">
+  <link rel="stylesheet" href="style.css?v=20261127-3">
   <script src="config.js?v=20261127-1"></script>
   <script src="holidays.js?v=20261127-1"></script>
   <script id="initialEvents" type="application/json">[
@@ -61,7 +61,7 @@
     {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
     {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
   ]</script>
-  <script defer src="app.js?v=20261127-1"></script>
+  <script defer src="app.js?v=20261127-3"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -72,7 +72,7 @@
     </section>
     <div class="view-bar">
       <div class="seg-group"><span class="seg-label" id="gradeLabel">학년</span><div class="seg" id="gradeFilter" role="group" aria-labelledby="gradeLabel"><button type="button" data-grade="" aria-pressed="true">전체</button><button type="button" data-grade="1" aria-pressed="false">1학년</button><button type="button" data-grade="2" aria-pressed="false">2학년</button><button type="button" data-grade="3" aria-pressed="false">3학년</button></div></div>
-      <div class="view-tools"><div class="seg" role="group" aria-label="보기 방식"><button type="button" data-view="calendar" aria-pressed="true">달력</button><button type="button" data-view="list" aria-pressed="false">1년 목록</button></div><button id="icsBtn" class="tool-button" type="button">내 캘린더에 추가</button></div>
+      <div class="view-tools"><div class="seg" role="group" aria-label="보기 방식"><button type="button" data-view="calendar" aria-pressed="true">달력</button><button type="button" data-view="list" aria-pressed="false">1년 목록</button></div><button id="icsBtn" class="tool-button" type="button">내 캘린더에 추가</button><button id="printBtn" class="tool-button" type="button">인쇄</button></div>
     </div>
     <div class="calendar-layout" id="calendarView">
     <section id="agenda" class="agenda-section" aria-labelledby="agendaHeading"><div class="agenda-title"><div><p class="eyebrow">선택한 날짜</p><h3 id="agendaHeading">1월 일정</h3></div><div class="agenda-sub"><span id="agendaDate" class="agenda-date">월을 선택해 주세요</span><button id="shareDay" class="text-button" type="button">링크 복사</button></div></div><div id="agendaList" class="agenda-list" aria-live="polite"></div></section>
@@ -86,7 +86,7 @@
     <section id="yearView" class="year-view" aria-labelledby="yearHeading" hidden>
       <div class="year-head">
         <div><p class="eyebrow">창의경영고등학교</p><h2 id="yearHeading">학사 일정</h2><p class="year-sub" id="yearSub"></p></div>
-        <div class="year-tools"><label class="month-select-wrap" id="yearSelectWrap" hidden><span class="sr-only">연도 선택</span><select id="yearSelect" class="month-select"></select></label><button id="printBtn" class="tool-button" type="button">인쇄</button></div>
+        <div class="year-tools"><label class="month-select-wrap" id="yearSelectWrap" hidden><span class="sr-only">연도 선택</span><select id="yearSelect" class="month-select"></select></label></div>
       </div>
       <table class="year-table">
         <thead><tr><th scope="col" class="yt-date">날짜</th><th scope="col" class="yt-title">일정</th><th scope="col" class="yt-cat">분류</th></tr></thead>
@@ -103,6 +103,7 @@
       <div class="footer-sub"><span>일정은 학교 사정에 따라 바뀔 수 있습니다. 학교 공지와 함께 확인해 주세요.</span><span class="credit">기획·제작 <b>은율</b></span></div>
     </footer>
   </main>
+  <div id="printSheet" class="print-sheet" aria-hidden="true"></div>
 
   <dialog id="loginDialog" class="dialog">
     <form id="loginForm" class="dialog-card">
@@ -179,6 +180,23 @@
       </ul>
       <button id="icsDownload" class="solid-button wide" type="button">파일 받기</button>
     </div>
+  </dialog>
+
+  <dialog id="printDialog" class="dialog">
+    <form id="printForm" class="dialog-card">
+      <button type="button" class="close" data-close aria-label="닫기">×</button>
+      <p class="eyebrow">인쇄</p>
+      <h2>어떤 모양으로 인쇄할까요?</h2>
+      <p class="dialog-copy" id="printSummary"></p>
+      <fieldset class="print-pick">
+        <legend class="sr-only">인쇄 모양</legend>
+        <label><input type="radio" name="printKind" value="month"><span><b id="printMonthLabel">달력 · 이번 달</b><small>지금 보고 있는 달 한 장</small></span></label>
+        <label><input type="radio" name="printKind" value="year"><span><b>달력 · 1년 전체</b><small>1월부터 12월까지 한 달에 한 장씩 12장</small></span></label>
+        <label><input type="radio" name="printKind" value="list"><span><b>1년 목록</b><small>날짜순 표, 세로 방향</small></span></label>
+      </fieldset>
+      <p class="fine-print print-tip">달력은 A4 가로 방향으로 나옵니다. 위에서 학년을 골라 두면 그 학년 일정만 인쇄합니다.</p>
+      <button class="solid-button wide" type="submit">인쇄하기</button>
+    </form>
   </dialog>
 
   <dialog id="termsDialog" class="dialog terms-dialog">

@@ -407,6 +407,52 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
+  /* ---------- 인쇄: 달력(한 달에 한 장, A4 가로) 또는 1년 목록 ---------- */
+  // 인쇄용 내용은 화면 밖 #printSheet에 따로 만들고, 인쇄할 때만 화면 대신 보입니다(Ctrl+P도 같은 길로).
+  let printKind = null;
+  const printYear = () => (view === 'list' ? listYear : YEAR);
+  const printEvents = y => (y === YEAR ? publicHolidays : holidaysFor(y)).concat(events.filter(e => overlapsYear(e, y)).filter(forGrade).sort(byDate));
+  const PRINT_LEGEND = '<p class="pm-legend"><span><i class="dot exam"></i>시험</span><span><i class="dot school"></i>학교 일정</span><span><i class="dot holiday"></i>휴일·방학</span><span><i class="dot public"></i>공휴일</span></p>';
+  function monthPage(y, m, shown) {
+    const lead = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    let cells = '<div class="pm-cell blank"></div>'.repeat(lead);
+    for (let n = 1; n <= days; n++) {
+      const date = new Date(y, m, n), day = dateISO(date), dow = date.getDay(), list = shown.filter(e => isWithin(e, day));
+      const red = dow === 0 || list.some(e => e.isPublic);
+      cells += `<div class="pm-cell${red ? ' red' : dow === 6 ? ' sat' : ''}"><span class="pm-num">${n}</span>${list.map(e => `<span class="pm-ev ${e.isPublic ? 'public' : e.category}">${escapeHTML(e.title)}</span>`).join('')}</div>`;
+    }
+    cells += '<div class="pm-cell blank"></div>'.repeat((7 - (lead + days) % 7) % 7);
+    const site = `${location.host}${location.pathname.replace(/index.html$/, '')}`;
+    return `<section class="pm"><header class="pm-head"><div><p>창의경영고등학교 · ${y}학년도 학사 일정${gradeFilter ? ` · ${gradeFilter}학년 기준` : ''}</p><h2>${m + 1}<small>월</small></h2></div>${PRINT_LEGEND}</header>`
+      + `<div class="pm-week">${[...WEEKDAYS].map(w => `<span>${w}</span>`).join('')}</div>`
+      + `<div class="pm-grid" style="--rows:${Math.ceil((lead + days) / 7)}">${cells}</div>`
+      + `<footer class="pm-foot"><span>일정은 학교 사정에 따라 바뀔 수 있습니다. 학교 공지와 함께 확인해 주세요.</span><span>${today.replace(/-/g, '.')} 인쇄 · ${escapeHTML(site)}</span></footer></section>`;
+  }
+  function preparePrint(kind) {
+    const sheet = $('printSheet'), y = printYear();
+    if (kind === 'list') {
+      renderYear();
+      const copy = $('yearView').cloneNode(true);
+      copy.hidden = false;
+      [copy, ...copy.querySelectorAll('[id]')].forEach(el => el.removeAttribute('id'));
+      sheet.replaceChildren(copy);
+    } else {
+      const shown = printEvents(y), months = kind === 'month' && y === YEAR ? [month] : [...Array(12).keys()];
+      sheet.innerHTML = months.map(m => monthPage(y, m, shown)).join('');
+    }
+    document.body.classList.add('printing');
+  }
+  function openPrint() {
+    const y = printYear(), monthOk = y === YEAR && view === 'calendar';
+    const pick = view === 'list' ? 'list' : 'month';
+    $('printMonthLabel').textContent = `달력 · ${month + 1}월`;
+    $('printForm').querySelector('[value="month"]').closest('label').hidden = !monthOk;
+    $('printForm').querySelectorAll('[name="printKind"]').forEach(r => { r.checked = r.value === pick; });
+    $('printSummary').textContent = `${y}학년도 · ${gradeFilter ? `${gradeFilter}학년과 전체 학년 일정` : '전체 학년 일정'} · 공휴일 함께 표시`;
+    $('printDialog').showModal();
+  }
+  window.addEventListener('beforeprint', () => { preparePrint(printKind || (view === 'list' ? 'list' : 'month')); printKind = null; });
+
   /* ---------- 관리 창 ---------- */
   const gradeBoxes = () => [...$('gradePick').querySelectorAll('input')];
   const syncGradeBoxes = () => { const g = parseGrades($('eventTitle').value); gradeBoxes().forEach(b => { b.checked = g.includes(Number(b.value)); }); };
@@ -577,7 +623,15 @@
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
   $('yearSelect').addEventListener('change', ev => { listYear = Number(ev.target.value); renderYear(); });
   $('yearBody').addEventListener('click', ev => { const tr = ev.target.closest('tr[data-date]'); if (tr) goTo(tr.dataset.date, true); });
-  $('printBtn').addEventListener('click', () => window.print());
+  $('printBtn').addEventListener('click', openPrint);
+  $('printForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const kind = new FormData(ev.target).get('printKind') || 'year';
+    $('printDialog').close();
+    printKind = kind;
+    preparePrint(kind); // beforeprint를 지원하지 않는 브라우저도 고른 모양으로 나오게 미리 만듭니다.
+    setTimeout(() => window.print(), 60);
+  });
   $('icsBtn').addEventListener('click', openIcs);
   $('icsDownload').addEventListener('click', () => { downloadIcs(); $('icsDialog').close(); });
   $('shareDay').addEventListener('click', async () => {

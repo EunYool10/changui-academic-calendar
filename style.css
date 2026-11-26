@@ -193,7 +193,7 @@ button.day:hover { background: var(--sub); }
 .close:hover { background: var(--sub); }
 .close:focus-visible { outline: 2px solid var(--forest); outline-offset: -2px; }
 .dialog-card > label, .form-grid label { display: block; margin: 12px 0; color: #59635c; font-size: 13px; }
-.dialog-card input:not([type=checkbox]), .form-grid input, .form-grid select { width: 100%; height: 40px; margin-top: 6px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 6px; outline-color: var(--forest); background: #fffef9; color: var(--ink); font-size: 15px; }
+.dialog-card input:not([type=checkbox]):not([type=radio]), .form-grid input, .form-grid select { width: 100%; height: 40px; margin-top: 6px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 6px; outline-color: var(--forest); background: #fffef9; color: var(--ink); font-size: 15px; }
 .checkline { display: flex !important; align-items: center; gap: 8px; }
 .checkline input { width: 16px; height: 16px; accent-color: var(--forest); }
 .text-link { padding: 0; border: 0; background: none; color: var(--forest); text-decoration: underline; }
@@ -321,6 +321,18 @@ button.day:hover { background: var(--sub); }
 .bulk-table tr.bad td { background: var(--brick-wash); color: #854b38; }
 .bulk-table tr.bad td:first-child { white-space: normal; overflow-wrap: anywhere; }
 
+/* Print dialog: pick calendar pages or the year list. */
+.print-pick { margin: 0 0 12px; padding: 0; border: 0; border-top: 1px solid var(--line); }
+.print-pick label { display: flex; align-items: flex-start; gap: 10px; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.print-pick label[hidden] { display: none; }
+.print-pick label:hover { background: var(--sub); }
+.print-pick input { flex: none; width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--forest); }
+.print-pick b { display: block; color: var(--ink); font: 400 15px/1.4 var(--serif); }
+.print-pick label:has(input:checked) b { color: var(--forest-deep); font-weight: 700; }
+.print-pick small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.print-tip { margin: 0 0 4px; text-align: left; word-break: keep-all; }
+.print-sheet { display: none; }
+
 /* Laptops: a little less padding so the grid keeps roomy cells. */
 @media (max-width: 1200px) {
   body { padding: 16px; }
@@ -354,7 +366,7 @@ button.day:hover { background: var(--sub); }
   .legend { gap: 6px 14px; font-size: 11px; }
   .legend-note { flex-basis: 100%; margin-left: 0; }
   /* iOS zooms into inputs smaller than 16px. */
-  .dialog-card input:not([type=checkbox]), .form-grid input, .form-grid select, .month-select { font-size: 16px; }
+  .dialog-card input:not([type=checkbox]):not([type=radio]), .form-grid input, .form-grid select, .month-select { font-size: 16px; }
   .dialog-card { padding: 26px 20px 22px; }
   .form-grid, .form-grid.three { grid-template-columns: 1fr; }
   .terms-header { padding: 30px 22px 24px; }
@@ -384,6 +396,9 @@ button.day:hover { background: var(--sub); }
 }
 @media (max-width: 380px) {
   .today-button { padding: 0 8px; font-size: 12px; }
+  /* 아주 좁은 폰: 보기 전환은 한 줄을 다 쓰고, 캘린더·인쇄 버튼은 아래 줄에 나눠 놓습니다. */
+  .view-tools .seg { flex-basis: 100%; }
+  .view-tools .tool-button { flex: 1; }
 }
 
 /* Print: the year list on its own, or the current month without the page chrome. */
@@ -405,6 +420,36 @@ button.day:hover { background: var(--sub); }
   .year-table tr { break-inside: avoid; }
   .year-table .month-row th { break-after: avoid; }
   .year-table tr[data-date]:hover td { background: none; }
+
+  /* 인쇄용 사본(#printSheet)이 준비되면 화면 대신 그것만 찍습니다. */
+  body.printing .page-shell { display: none !important; }
+  body.printing .print-sheet { display: block; }
+  @page cal { size: A4 landscape; margin: 10mm; }
+  .pm { page: cal; display: flex; flex-direction: column; height: 186mm; overflow: hidden; break-after: page; color: var(--ink); font-family: var(--event); }
+  .pm:last-child { break-after: auto; }
+  .pm-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 3mm; }
+  .pm-head p { margin: 0 0 1mm; color: var(--muted); font-size: 9.5pt; }
+  .pm-head h2 { margin: 0; color: var(--forest-deep); font: 700 26pt/1 var(--serif); }
+  .pm-head h2 small { margin-left: 2px; font-size: 13pt; font-weight: 400; }
+  .pm-legend { display: flex; gap: 12px; margin: 0; color: var(--muted); font-size: 8.5pt; white-space: nowrap; }
+  .pm-legend span { display: flex; align-items: center; gap: 4px; }
+  .pm-legend .dot { width: 8px; height: 8px; }
+  .pm-week, .pm-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-left: 1px solid #c3cbc2; }
+  .pm-week { border-top: 1px solid #c3cbc2; background: var(--sub); color: #4d5850; font-size: 9pt; text-align: center; }
+  .pm-week span { padding: 1.2mm 0; border-right: 1px solid #c3cbc2; border-bottom: 1px solid #c3cbc2; }
+  .pm-week span:first-child { color: var(--brick); }
+  .pm-week span:last-child { color: var(--blue); }
+  .pm-grid { flex: 1; min-height: 0; grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); }
+  .pm-cell { display: flex; flex-direction: column; gap: 1mm; min-width: 0; min-height: 0; overflow: hidden; padding: 1.2mm 1.5mm; border-right: 1px solid #c3cbc2; border-bottom: 1px solid #c3cbc2; }
+  .pm-cell.blank { background: #f3f4ef; }
+  .pm-num { color: #3f4a43; font-size: 11pt; line-height: 1.1; }
+  .pm-cell.red .pm-num { color: var(--brick); }
+  .pm-cell.sat .pm-num { color: var(--blue); }
+  .pm-ev { padding: .5mm 1.2mm; border-left: 2px solid var(--forest); background: var(--green-wash); color: #2f4a3c; font-size: 8.5pt; line-height: 1.3; overflow-wrap: anywhere; word-break: keep-all; }
+  .pm-ev.exam { border-color: var(--brick); background: var(--brick-wash); color: #7a4232; }
+  .pm-ev.holiday { border-color: var(--blue); background: var(--blue-wash); color: #3f5c6c; }
+  .pm-ev.public { padding-left: 0; border-left: 0; background: none; color: var(--brick); }
+  .pm-foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 2mm; color: var(--muted); font-size: 8pt; }
 }
 @media (max-width: 380px) {
   :root { --gutter: 12px; --cell-h: 62px; }
