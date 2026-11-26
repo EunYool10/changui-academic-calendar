@@ -38,6 +38,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 /* Keep phones and tablets from enlarging text on their own (iOS landscape, Android font boosting). */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; }
 body { margin: 0; padding: 24px; background: var(--ground); color: var(--ink); font: 14px/1.55 var(--sans); }
@@ -240,6 +241,86 @@ button.day:hover { background: var(--sub); }
 .terms-body p { margin: 0; }
 .terms-footer { margin-top: auto; padding: 18px 40px 22px; border-top: 1px solid var(--line); background: #f8f8f3; }
 
+/* Toolbar under the header: grade filter on the left, view switch and calendar file on the right. */
+.view-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px var(--gutter); border-bottom: 1px solid var(--line); background: var(--sub); }
+.seg-group, .view-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.seg-label { color: var(--muted); font-size: 12px; }
+.seg { display: inline-flex; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); }
+.seg button { min-height: 34px; padding: 0 12px; border: 0; border-right: 1px solid var(--line-strong); background: none; color: #4d5850; font-size: 13px; white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { background: var(--sub); }
+.seg button[aria-pressed="true"] { background: var(--forest); color: #fffef9; }
+.seg button:focus-visible, .tool-button:focus-visible, .today-button:focus-visible, .text-button:focus-visible { position: relative; outline: 2px solid var(--forest); outline-offset: 2px; }
+.tool-button { min-height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); color: var(--ink); font-size: 13px; white-space: nowrap; }
+.view-bar .tool-button { min-height: 36px; }
+.tool-button:hover { border-color: var(--forest); color: var(--forest); }
+.today-button { height: 36px; margin-left: 4px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); color: var(--forest); font-size: 13px; }
+.today-button:hover:not(:disabled) { border-color: var(--forest); background: var(--green-wash); }
+.today-button:disabled { opacity: .4; cursor: default; }
+.agenda-sub { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin-top: 4px; }
+.agenda-sub .agenda-date { margin-top: 0; }
+.text-button { padding: 2px 0; border: 0; background: none; color: var(--forest); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Public holidays: red day number and a plain red label, set apart from the school's own entries. */
+.red-day .day-num { color: var(--brick); }
+.event-chip.public { padding-left: 2px; border-left-color: transparent; background: none; color: var(--brick); }
+.dot.public { box-sizing: border-box; border: 2px solid var(--brick); background: none; }
+.agenda-marker.public { background: none; box-shadow: inset 0 0 0 1px var(--brick); }
+.agenda-item.public h4 { color: var(--brick); }
+.dday-cat.public, .dday-count.public { color: var(--brick); }
+
+/* Whole-year list (also the print layout). */
+.year-view { flex: 1; padding: 28px var(--gutter) 28px; }
+.year-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin-bottom: 16px; }
+.year-head h2 { margin: 0; color: var(--forest-deep); font: 500 clamp(24px, 1vw + 20px, 30px)/1.2 var(--serif); letter-spacing: -.03em; }
+.year-sub { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.year-tools { display: flex; align-items: center; gap: 6px; }
+.year-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.year-table th, .year-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.year-table thead th { border-top: 1px solid var(--line-strong); border-bottom-color: var(--line-strong); background: var(--sub); color: var(--muted); font-size: 12px; font-weight: 400; }
+.year-table .month-row th { padding: 18px 12px 8px; border-bottom-color: var(--line-strong); color: var(--forest-deep); font: 700 15px var(--serif); }
+.year-table .yt-date { width: 190px; color: #4d5850; white-space: nowrap; }
+.year-table .yt-title { font-family: var(--serif); overflow-wrap: anywhere; word-break: keep-all; }
+.year-table .yt-cat { width: 110px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.yt-cat .dot { display: inline-block; margin-right: 6px; vertical-align: -1px; }
+.year-table tr.public .yt-title { color: var(--brick); }
+.year-table tr[data-date] { cursor: pointer; }
+.year-table tr[data-date]:hover td { background: var(--sub); }
+.year-table .empty-agenda { padding: 24px 12px; }
+.year-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+
+.footer-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.install-hint { margin: 10px 0 0; color: var(--ink); font-size: 12px; }
+.plain-list { margin: 0 0 14px; padding-left: 18px; color: #59635c; font: 13px/1.7 var(--serif); word-break: keep-all; }
+.plain-list li + li { margin-top: 4px; }
+
+/* Manage dialog: one-at-a-time form or a pasted batch. */
+.manage-tabs { display: flex; margin: 0 0 6px; border-bottom: 1px solid var(--line); }
+.manage-tabs button { margin-bottom: -1px; padding: 9px 14px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: 14px; }
+.manage-tabs button[aria-selected="true"] { border-bottom-color: var(--forest); color: var(--forest-deep); font-weight: 700; }
+.manage-tabs button:focus-visible { outline: 2px solid var(--forest); outline-offset: -2px; }
+.grade-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 6px 0 0; padding: 0; border: 0; color: #59635c; font-size: 13px; }
+.grade-pick legend { float: left; margin-right: 6px; padding: 0; }
+.grade-pick label { display: flex; align-items: center; gap: 6px; }
+.grade-pick input { width: 16px; height: 16px; margin: 0; accent-color: var(--forest); }
+.grade-hint { flex-basis: 100%; color: var(--muted); font-size: 12px; }
+.bulk-copy { margin: 10px 0 8px; color: #59635c; font: 13px/1.7 var(--serif); word-break: keep-all; }
+.bulk-example { margin: 0 0 10px; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--sub); color: #4d5850; font: 12px/1.7 var(--event); white-space: pre; }
+.bulk-year { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; color: #59635c; font-size: 13px; }
+.bulk-year select { height: 34px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: #fffef9; color: var(--ink); }
+.bulk-text textarea { display: block; width: 100%; min-height: 140px; padding: 10px; border: 1px solid var(--line-strong); border-radius: 6px; outline-color: var(--forest); background: #fffef9; color: var(--ink); font: 14px/1.6 var(--event); resize: vertical; }
+.bulk-preview { max-height: 260px; margin-top: 10px; overflow: auto; }
+.bulk-preview:empty { display: none; }
+.bulk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bulk-table th, .bulk-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.bulk-table th { position: sticky; top: 0; background: var(--sub); color: var(--muted); font-size: 12px; font-weight: 400; }
+.bulk-table td:first-child { color: #4d5850; white-space: nowrap; }
+.bulk-table small { display: block; color: var(--muted); font-size: 11px; }
+.bulk-table select { height: 30px; padding: 0 4px; border: 1px solid var(--line-strong); border-radius: 4px; background: #fffef9; color: var(--ink); font-size: 12px; }
+.bulk-table tr.skip td { color: var(--muted); }
+.bulk-table tr.bad td { background: var(--brick-wash); color: #854b38; }
+.bulk-table tr.bad td:first-child { white-space: normal; overflow-wrap: anywhere; }
+
 /* Laptops: a little less padding so the grid keeps roomy cells. */
 @media (max-width: 1200px) {
   body { padding: 16px; }
@@ -283,6 +364,45 @@ button.day:hover { background: var(--sub); }
   .terms-summary div:last-child { border-bottom: 0; }
   .terms-card > .terms-body { margin: 14px 22px 0; }
   .terms-footer { padding: 16px 22px 20px; }
+  .view-bar { gap: 8px; padding: 10px var(--gutter); }
+  .seg-group, .view-tools { width: 100%; }
+  .seg-label { display: none; }
+  .seg-group .seg, .view-tools .seg { flex: 1; }
+  .seg button { flex: 1; padding: 0 6px; }
+  .today-button { margin-left: 0; padding: 0 10px; }
+  .year-view { padding: 20px var(--gutter) 22px; }
+  .year-table thead { display: none; }
+  .year-table tbody tr:not(.month-row) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+  .year-table tbody tr:not(.month-row) td { width: auto; padding: 0; border: 0; }
+  .year-table .yt-date { grid-column: 1; font-size: 12px; white-space: normal; }
+  .year-table .yt-cat { grid-column: 2; grid-row: 1; font-size: 12px; }
+  .year-table .yt-title { grid-column: 1 / -1; font-size: 15px; }
+  .year-table .month-row th { padding: 16px 2px 6px; }
+  .bulk-text textarea, .bulk-year select { font-size: 16px; }
+  .bulk-table td:first-child { width: 34%; font-size: 12px; white-space: normal; }
+  .bulk-table td:nth-child(2) { word-break: keep-all; }
+}
+@media (max-width: 380px) {
+  .today-button { padding: 0 8px; font-size: 12px; }
+}
+
+/* Print: the year list on its own, or the current month without the page chrome. */
+@media print {
+  @page { margin: 12mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { padding: 0; background: #fff; }
+  .page-shell { width: 100%; min-height: 0; border: 0; border-radius: 0; }
+  .hero, .view-bar, .site-footer, .month-controls, #agenda, .legend-note, .year-tools, .year-note, dialog { display: none !important; }
+  .calendar-layout { display: block; }
+  #calendar, .year-view { padding: 0; }
+  .day { min-height: 92px; }
+  .day.selected { background: var(--paper); box-shadow: none; }
+  .day:focus-visible { outline: 0; }
+  #monthKicker::before { content: "창의경영고등학교 · "; }
+  .year-table { font-size: 12px; }
+  .year-table tr { break-inside: avoid; }
+  .year-table .month-row th { break-after: avoid; }
+  .year-table tr[data-date]:hover td { background: none; }
 }
 @media (max-width: 380px) {
   :root { --gutter: 12px; --cell-h: 62px; }

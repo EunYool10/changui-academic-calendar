@@ -4,11 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f4ef">
-  <meta name="description" content="창의경영고등학교 학사 일정 달력">
+  <meta name="description" content="창의경영고등학교 학사 일정을 달력으로 확인하세요. 시험, 학교 일정, 휴일을 한눈에 볼 수 있습니다.">
   <title>창의경영고등학교 · 학사 달력</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="창의경영고 학사 달력">
+  <meta property="og:title" content="창의경영고등학교 학사 달력">
+  <meta property="og:description" content="시험, 학교 일정, 휴일을 달력으로 확인하세요.">
+  <meta property="og:url" content="https://eunyool10.github.io/changui-academic-calendar/">
+  <meta property="og:image" content="https://eunyool10.github.io/changui-academic-calendar/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="창의경영고등학교 학사 달력">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="calendar.svg">
-  <link rel="stylesheet" href="style.css?v=20261126-1">
-  <script src="config.js?v=20261126-1"></script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="학사 달력">
+  <link rel="stylesheet" href="style.css?v=20261127-1">
+  <script src="config.js?v=20261127-1"></script>
+  <script src="holidays.js?v=20261127-1"></script>
   <script id="initialEvents" type="application/json">[
     {"start":"2026-01-02","end":"2026-01-02","title":"졸업식, 종업식","category":"school"},
     {"start":"2026-03-03","end":"2026-03-03","title":"입학식, 개학식","category":"school"},
@@ -46,7 +61,7 @@
     {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
     {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
   ]</script>
-  <script defer src="app.js?v=20261126-1"></script>
+  <script defer src="app.js?v=20261127-1"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -55,20 +70,36 @@
       <aside class="dday" id="dday" aria-label="다가오는 일정"></aside>
       <div class="staff-actions"><button id="loginBtn" class="quiet-button" type="button">교직원 로그인</button><button id="adminBtn" class="solid-button" type="button" hidden>일정 관리</button><button id="logoutBtn" class="quiet-button" type="button" hidden>로그아웃</button></div>
     </section>
-    <div class="calendar-layout">
-    <section id="agenda" class="agenda-section" aria-labelledby="agendaHeading"><div class="agenda-title"><div><p class="eyebrow">선택한 날짜</p><h3 id="agendaHeading">1월 일정</h3></div><span id="agendaDate" class="agenda-date">월을 선택해 주세요</span></div><div id="agendaList" class="agenda-list" aria-live="polite"></div></section>
+    <div class="view-bar">
+      <div class="seg-group"><span class="seg-label" id="gradeLabel">학년</span><div class="seg" id="gradeFilter" role="group" aria-labelledby="gradeLabel"><button type="button" data-grade="" aria-pressed="true">전체</button><button type="button" data-grade="1" aria-pressed="false">1학년</button><button type="button" data-grade="2" aria-pressed="false">2학년</button><button type="button" data-grade="3" aria-pressed="false">3학년</button></div></div>
+      <div class="view-tools"><div class="seg" role="group" aria-label="보기 방식"><button type="button" data-view="calendar" aria-pressed="true">달력</button><button type="button" data-view="list" aria-pressed="false">1년 목록</button></div><button id="icsBtn" class="tool-button" type="button">내 캘린더에 추가</button></div>
+    </div>
+    <div class="calendar-layout" id="calendarView">
+    <section id="agenda" class="agenda-section" aria-labelledby="agendaHeading"><div class="agenda-title"><div><p class="eyebrow">선택한 날짜</p><h3 id="agendaHeading">1월 일정</h3></div><div class="agenda-sub"><span id="agendaDate" class="agenda-date">월을 선택해 주세요</span><button id="shareDay" class="text-button" type="button">링크 복사</button></div></div><div id="agendaList" class="agenda-list" aria-live="polite"></div></section>
     <section id="calendar" class="calendar-section" aria-label="월별 학사 일정">
-      <div class="calendar-head"><div><p class="eyebrow" id="monthKicker">학년도</p><h2><span id="monthNumber">01</span><small>월</small></h2></div><div class="month-controls"><button id="prevMonth" class="arrow" type="button" aria-label="이전 달">←</button><label class="month-select-wrap"><span class="sr-only">월 선택</span><select id="monthSelect" class="month-select" aria-label="월 선택"></select></label><button id="nextMonth" class="arrow" type="button" aria-label="다음 달">→</button></div></div>
+      <div class="calendar-head"><div><p class="eyebrow" id="monthKicker">학년도</p><h2><span id="monthNumber">01</span><small>월</small></h2></div><div class="month-controls"><button id="prevMonth" class="arrow" type="button" aria-label="이전 달">←</button><label class="month-select-wrap"><span class="sr-only">월 선택</span><select id="monthSelect" class="month-select" aria-label="월 선택"></select></label><button id="nextMonth" class="arrow" type="button" aria-label="다음 달">→</button><button id="todayBtn" class="today-button" type="button">오늘</button></div></div>
       <div class="weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div id="calendarGrid" class="calendar-grid" role="group" aria-label="학사 일정"></div>
-      <div class="legend"><span><i class="dot exam"></i> 시험</span><span><i class="dot school"></i> 학교 일정</span><span><i class="dot holiday"></i> 휴일·방학</span><span class="legend-note" id="legendNote">날짜를 선택하면 해당 일정이 표시됩니다.</span></div>
+      <div class="legend"><span><i class="dot exam"></i> 시험</span><span><i class="dot school"></i> 학교 일정</span><span><i class="dot holiday"></i> 휴일·방학</span><span><i class="dot public"></i> 공휴일</span><span class="legend-note" id="legendNote">날짜를 선택하면 해당 일정이 표시됩니다.</span></div>
     </section>
     </div>
+    <section id="yearView" class="year-view" aria-labelledby="yearHeading" hidden>
+      <div class="year-head">
+        <div><p class="eyebrow">창의경영고등학교</p><h2 id="yearHeading">학사 일정</h2><p class="year-sub" id="yearSub"></p></div>
+        <div class="year-tools"><label class="month-select-wrap" id="yearSelectWrap" hidden><span class="sr-only">연도 선택</span><select id="yearSelect" class="month-select"></select></label><button id="printBtn" class="tool-button" type="button">인쇄</button></div>
+      </div>
+      <table class="year-table">
+        <thead><tr><th scope="col" class="yt-date">날짜</th><th scope="col" class="yt-title">일정</th><th scope="col" class="yt-cat">분류</th></tr></thead>
+        <tbody id="yearBody"></tbody>
+      </table>
+      <p class="year-note">일정을 누르면 달력에서 그 날짜를 엽니다.</p>
+    </section>
     <footer class="site-footer">
       <div class="footer-main">
         <div class="footer-id"><b>창의경영고등학교 학사 달력</b><span class="footer-meta"><span id="footerYear">2026학년도</span><span id="footerUpdated" hidden></span></span></div>
-        <button id="termsBtn" type="button">이용 안내·개인정보</button>
+        <div class="footer-buttons"><button id="installBtn" type="button" hidden>홈 화면에 추가</button><button id="termsBtn" type="button">이용 안내·개인정보</button></div>
       </div>
+      <p id="installHint" class="install-hint" hidden>iPhone·iPad: Safari 아래쪽의 공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 고르세요.</p>
       <div class="footer-sub"><span>일정은 학교 사정에 따라 바뀔 수 있습니다. 학교 공지와 함께 확인해 주세요.</span><span class="credit">기획·제작 <b>은율</b></span></div>
     </footer>
   </main>
@@ -94,6 +125,8 @@
       <p class="eyebrow">관리자</p>
       <h2>학사 일정 관리</h2>
       <p id="roleNote" class="dialog-copy"></p>
+      <div class="manage-tabs" role="tablist" aria-label="입력 방식"><button type="button" role="tab" id="tabOneBtn" data-tab="one" aria-selected="true" aria-controls="tabOne">한 건씩 입력</button><button type="button" role="tab" id="tabBulkBtn" data-tab="bulk" aria-selected="false" aria-controls="tabBulk">여러 건 붙여넣기</button></div>
+      <div id="tabOne" role="tabpanel" aria-labelledby="tabOneBtn">
       <form id="eventForm">
         <div class="form-grid">
           <label>일정명<input id="eventTitle" autofocus maxlength="100" required placeholder="일정 이름"></label>
@@ -101,11 +134,24 @@
           <label>시작일<input type="date" id="eventStart" required></label>
           <label>종료일<input type="date" id="eventEnd" required></label>
         </div>
+        <fieldset class="grade-pick" id="gradePick"><legend>대상 학년</legend><label><input type="checkbox" value="1"> 1학년</label><label><input type="checkbox" value="2"> 2학년</label><label><input type="checkbox" value="3"> 3학년</label><span class="grade-hint">고르지 않으면 전체 학년입니다. 고른 학년은 일정명 끝에 (1,2학년)처럼 붙습니다.</span></fieldset>
         <div class="form-actions"><button type="button" id="deleteEvent" class="delete-button" hidden>이 일정 삭제</button><span class="spacer"></span><button type="button" id="newEvent" class="quiet-button" hidden>새 일정 입력</button><button class="solid-button" type="submit" id="saveEvent">일정 추가</button></div>
         <p id="saveMessage" class="form-message" role="status"></p>
       </form>
       <div class="manage-list-title"><b id="manageMonth">이 달</b>의 일정 <span id="manageCount"></span></div>
       <div id="manageList" class="manage-list"></div>
+      </div>
+      <div id="tabBulk" role="tabpanel" aria-labelledby="tabBulkBtn" hidden>
+        <p class="bulk-copy">엑셀이나 한글 표에서 일정 줄을 복사해 붙여넣으세요. 한 줄에 일정 하나씩, 날짜를 먼저 적습니다. 분류는 이름을 보고 자동으로 고르며, 아래 표에서 바꿀 수 있습니다.</p>
+        <pre class="bulk-example" aria-label="입력 예시">3.2(화)   입학식, 개학식
+3.26~3.28 주제별체험학습(2학년)
+2027-04-22  2027-04-23  1학기 1차 정기시험(1,2학년)  시험</pre>
+        <label class="bulk-year">연도를 적지 않은 날짜는<select id="bulkYear"></select>년으로 넣습니다.</label>
+        <label class="bulk-text"><span class="sr-only">붙여넣을 일정</span><textarea id="bulkText" rows="7" spellcheck="false" placeholder="여기에 붙여넣기"></textarea></label>
+        <div id="bulkPreview" class="bulk-preview" aria-live="polite"></div>
+        <div class="form-actions"><button type="button" id="bulkClear" class="quiet-button">비우기</button><span class="spacer"></span><button class="solid-button" type="button" id="bulkSave" disabled>저장할 일정 없음</button></div>
+        <p id="bulkMessage" class="form-message" role="status"></p>
+      </div>
       <form id="passwordForm" class="password-form">
         <div class="manage-list-title">비밀번호 변경 <span>처음 받은 임시 비밀번호는 바로 바꿔 주세요.</span></div>
         <div class="form-grid three">
@@ -116,6 +162,22 @@
         <div class="form-actions"><span class="spacer"></span><button class="quiet-button" type="submit">비밀번호 변경</button></div>
         <p id="passwordMessage" class="form-message" role="status"></p>
       </form>
+    </div>
+  </dialog>
+
+  <dialog id="icsDialog" class="dialog">
+    <div class="dialog-card">
+      <button type="button" class="close" data-close aria-label="닫기">×</button>
+      <p class="eyebrow">내 캘린더에 추가</p>
+      <h2>캘린더 파일 받기</h2>
+      <p class="dialog-copy" id="icsSummary"></p>
+      <ul class="plain-list">
+        <li>받은 파일(.ics)을 열면 휴대폰이나 컴퓨터의 캘린더 앱에 일정이 들어갑니다.</li>
+        <li>구글 캘린더는 컴퓨터에서 설정 → 가져오기/내보내기 → 가져오기로 넣습니다.</li>
+        <li>나중에 바뀐 일정은 자동으로 반영되지 않습니다. 일정이 바뀌면 파일을 다시 받아 주세요.</li>
+        <li>공휴일은 대부분의 캘린더에 이미 있어서 넣지 않았습니다.</li>
+      </ul>
+      <button id="icsDownload" class="solid-button wide" type="button">파일 받기</button>
     </div>
   </dialog>
 
@@ -134,7 +196,7 @@
       </div>
       <div class="terms-body">
         <section><h3>1. 일정 안내</h3><p>학사 일정은 학교 사정에 따라 바뀔 수 있습니다. 중요한 일정은 학교 공지와 가정통신문을 함께 확인해 주세요.</p></section>
-        <section><h3>2. 방문자 정보</h3><p>일정을 보기만 하는 방문자의 개인정보는 수집하지 않고, 쿠키나 방문 기록을 따로 저장하지 않습니다. 다만 사이트를 제공하는 GitHub Pages와 일정 데이터를 제공하는 Google Firebase에 접속 기록(IP 주소 등)이 남을 수 있습니다.</p></section>
+        <section><h3>2. 방문자 정보</h3><p>일정을 보기만 하는 방문자의 개인정보는 수집하지 않고, 쿠키나 방문 기록을 따로 저장하지 않습니다. 고른 학년과 마지막으로 받은 일정 사본은 빠른 표시를 위해 그 브라우저에만 저장되며 어디로도 보내지 않습니다. 다만 사이트를 제공하는 GitHub Pages와 일정 데이터를 제공하는 Google Firebase에 접속 기록(IP 주소 등)이 남을 수 있습니다.</p></section>
         <section><h3>3. 교직원 계정</h3><p>관리자 계정의 아이디와 비밀번호는 Google Firebase 인증에서 처리합니다. 비밀번호는 암호화되어 저장되므로 사이트 운영자도 볼 수 없습니다. 로그인 상태는 브라우저 탭을 닫으면 끝납니다.</p></section>
         <section><h3>4. 일정 데이터</h3><p>일정 이름, 날짜, 분류와 마지막 수정 시각을 Google Cloud Firestore(서울 리전)에 저장합니다. 일정에는 학생이나 교직원의 개인정보를 적지 않습니다.</p></section>
         <section><h3>5. 계정 관리</h3><p>관리자 계정은 다른 사람과 함께 쓰지 말고, 처음 받은 임시 비밀번호는 로그인한 뒤 바로 바꿔 주세요. 계정 삭제와 비밀번호 초기화는 학교 관리자에게 요청합니다.</p></section>
