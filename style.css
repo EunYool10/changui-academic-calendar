@@ -390,8 +390,10 @@ button.day:hover { background: var(--sub); }
 @media print {
   @page { margin: 12mm; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { padding: 0; background: #fff; }
-  .page-shell { width: 100%; min-height: 0; border: 0; border-radius: 0; }
+  /* 종이는 흰색이라 화면용 크림색이 남으면 글 부분만 색 상자처럼 찍힙니다. 인쇄에서는 모두 흰색으로 맞춥니다. */
+  :root { --paper: #fff; }
+  html, body { padding: 0; background: #fff; }
+  .page-shell { width: 100%; min-height: 0; border: 0; border-radius: 0; background: #fff; }
   .hero, .view-bar, .site-footer, .month-controls, #agenda, .legend-note, .year-tools, .year-note, dialog { display: none !important; }
   .calendar-layout { display: block; }
   #calendar, .year-view { padding: 0; }
