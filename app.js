@@ -75,6 +75,20 @@
     .filter(h => !events.some(e => e.start <= h.end && e.end >= h.start && e.title.replace(/\s/g, '').includes(holidayKey(h.title))));
   const shownEvents = () => publicHolidays.concat(events.filter(forGrade).sort(byDate));
 
+  /* ---------- 최근 바뀐 일정: 날짜를 바꾼 일정과 한 건씩 새로 넣은 일정을 7일 동안 표시합니다 ---------- */
+  const RECENT_MS = 7 * 86400000;
+  const isRecent = t => !!t && Date.now() - Date.parse(t) < RECENT_MS;
+  const markOf = e => (e.isPublic ? '' : isRecent(e.changedAt) && e.prevStart ? 'changed' : isRecent(e.createdAt) ? 'new' : '');
+  const prevText = e => rangeText({ start: e.prevStart, end: e.prevEnd || e.prevStart });
+  const markTag = (e, short) => {
+    const m = markOf(e);
+    return m ? `<b class="mark-tag ${m}">${m === 'changed' ? (short ? '변경' : '날짜 변경') : (short ? '새' : '새 일정')}</b>` : '';
+  };
+  const markLine = e => {
+    const m = markOf(e);
+    return m === 'changed' ? `<p class="mark-line changed">날짜가 바뀌었습니다 · 원래 ${prevText(e)}</p>` : m === 'new' ? '<p class="mark-line new">새로 추가된 일정입니다</p>' : '';
+  };
+
   function applyYear() {
     document.title = `창의경영고등학교 · ${YEAR} 학사 달력`;
     $('heroYear').textContent = String(YEAR);
@@ -82,12 +96,14 @@
     $('monthSelect').innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i}">${i + 1}월</option>`).join('');
     const nextFirst = Number(today.slice(5, 7)) >= 10; // 가을부터는 다음 해 일정을 미리 넣는 경우가 많습니다.
     $('bulkYear').innerHTML = [YEAR, YEAR + 1].map(y => `<option value="${y}"${(nextFirst ? y === YEAR + 1 : y === YEAR) ? ' selected' : ''}>${y}</option>`).join('');
+    $('neisYear').textContent = $('bulkYear').value;
   }
 
   /* ---------- 일정 데이터 (Firestore REST) ---------- */
   const fromDoc = d => {
-    const f = d.fields || {}, v = k => (f[k] && f[k].stringValue) || '';
-    return withMeta({ id: d.name.split('/').pop(), start: v('start'), end: v('end'), title: v('title'), category: v('category'), updatedAt: (f.updatedAt && f.updatedAt.timestampValue) || '' });
+    const f = d.fields || {}, v = k => (f[k] && f[k].stringValue) || '', t = k => (f[k] && f[k].timestampValue) || '';
+    return withMeta({ id: d.name.split('/').pop(), start: v('start'), end: v('end'), title: v('title'), category: v('category'), note: v('note'),
+      updatedAt: t('updatedAt'), createdAt: t('createdAt'), changedAt: t('changedAt'), prevStart: v('prevStart'), prevEnd: v('prevEnd') });
   };
   const kstDate = t => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t)).replace(/\s/g, '').replace(/\.$/, '');
   const readCache = () => {
@@ -125,15 +141,31 @@
   async function touchMeta() {
     try { await authedFetch(`${DOCS}/meta/site?updateMask.fieldPaths=updatedAt`, { method: 'PATCH', body: JSON.stringify({ fields: { updatedAt: { timestampValue: new Date().toISOString() } } }) }); } catch {}
   }
-  const eventFields = e => ({ fields: {
-    start: { stringValue: e.start }, end: { stringValue: e.end }, title: { stringValue: e.title },
-    category: { stringValue: e.category }, updatedAt: { timestampValue: new Date().toISOString() } } });
+  const eventFields = e => {
+    const f = { start: { stringValue: e.start }, end: { stringValue: e.end }, title: { stringValue: e.title },
+      category: { stringValue: e.category }, updatedAt: { timestampValue: new Date().toISOString() } };
+    if (e.note) f.note = { stringValue: e.note };
+    ['createdAt', 'changedAt'].forEach(k => { if (e[k]) f[k] = { timestampValue: e[k] }; });
+    ['prevStart', 'prevEnd'].forEach(k => { if (e[k]) f[k] = { stringValue: e[k] }; });
+    return { fields: f };
+  };
+  // 고칠 때 updateMask에 있는데 값이 없는 칸(지운 메모, 없앤 변경 표시)은 지워집니다. createdAt은 넣지 않아 그대로 남습니다.
+  const EDIT_FIELDS = ['start', 'end', 'title', 'category', 'updatedAt', 'note', 'changedAt', 'prevStart', 'prevEnd'];
+  // 날짜를 바꾸면 학생들이 알아보도록 바꾼 시각과 원래 날짜를 남깁니다. 7일 안에 또 바꾸면 처음 날짜를 계속 '원래 날짜'로 둡니다.
+  function changeRecord(old, e, notify) {
+    const keep = { changedAt: old.changedAt || '', prevStart: old.prevStart || '', prevEnd: old.prevEnd || '' };
+    if (!notify || (old.start === e.start && old.end === e.end)) return keep;
+    const fresh = isRecent(old.changedAt) && old.prevStart;
+    const prevStart = fresh ? old.prevStart : old.start, prevEnd = fresh ? (old.prevEnd || old.prevStart) : old.end;
+    if (prevStart === e.start && prevEnd === e.end) return { changedAt: '', prevStart: '', prevEnd: '' }; // 원래 날짜로 되돌리면 표시를 없앱니다.
+    return { changedAt: new Date().toISOString(), prevStart, prevEnd };
+  }
   async function authedFetch(url, opts = {}) {
     const token = await idToken();
     return fetch(url, { ...opts, headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` } });
   }
   async function saveEvent(e, id) {
-    const mask = ['start', 'end', 'title', 'category', 'updatedAt'].map(k => `updateMask.fieldPaths=${k}`).join('&');
+    const mask = EDIT_FIELDS.map(k => `updateMask.fieldPaths=${k}`).join('&');
     const r = id
       ? await authedFetch(`${DOCS}/events/${encodeURIComponent(id)}?${mask}&currentDocument.exists=true`, { method: 'PATCH', body: JSON.stringify(eventFields(e)) })
       : await authedFetch(`${DOCS}/events`, { method: 'POST', body: JSON.stringify(eventFields(e)) });
@@ -251,7 +283,7 @@
       cell.setAttribute('aria-pressed', String(day === selected));
       if (day === today) cell.setAttribute('aria-current', 'date');
       cell.setAttribute('aria-label', `${month + 1}월 ${n}일${holiday ? `, ${holiday.title}` : ''}${own ? `, 일정 ${own}개` : ''}`);
-      cell.innerHTML = `<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e => `<span class="event-chip ${e.category}${e.isPublic ? ' public' : ''}" data-id="${escapeHTML(e.id || '')}">${escapeHTML(e.title)}</span>`).join('')}</span>`;
+      cell.innerHTML = `<span class="day-num">${n}</span><span class="day-events">${dayEvents.map(e => `<span class="event-chip ${e.category}${e.isPublic ? ' public' : ''}" data-id="${escapeHTML(e.id || '')}">${markTag(e, true)}${escapeHTML(e.title)}</span>`).join('')}</span>`;
       cell.addEventListener('click', ev => {
         const now = Date.now(), chip = ev.target.closest('.event-chip');
         const isDouble = lastTap.day === day && now - lastTap.at < DOUBLE_TAP_MS;
@@ -272,8 +304,92 @@
     $('agendaHeading').textContent = `${dt.getMonth() + 1}월 일정`;
     $('agendaDate').textContent = `${dt.getMonth() + 1}월 ${dt.getDate()}일 · ${WEEKDAYS[dt.getDay()]}요일`;
     const found = shownEvents().filter(e => isWithin(e, selected));
-    $('agendaList').innerHTML = found.length ? found.map(e => `<article class="agenda-item${e.isPublic ? ' public' : ''}"><span class="agenda-marker ${e.isPublic ? 'public' : e.category}"></span><div><span class="agenda-range">${e.start === e.end ? shortDate(e.start) : `${shortDate(e.start)} — ${shortDate(e.end)}`}</span><h4>${escapeHTML(e.title)}</h4></div><span class="category-label">${categoryName(e)}</span></article>`).join('')
+    $('agendaList').innerHTML = found.length ? found.map(e => `<article class="agenda-item${e.isPublic ? ' public' : ''}"><span class="agenda-marker ${e.isPublic ? 'public' : e.category}"></span><div><span class="agenda-range">${e.start === e.end ? shortDate(e.start) : `${shortDate(e.start)} — ${shortDate(e.end)}`}</span><h4>${escapeHTML(e.title)}</h4>${markLine(e)}${e.note ? `<p class="agenda-note">${escapeHTML(e.note)}</p>` : ''}</div><span class="category-label">${categoryName(e)}</span></article>`).join('')
       : '<div class="empty-agenda">등록된 일정이 없는 날입니다.</div>';
+    renderMeal();
+  }
+
+  /* ---------- 나이스 교육정보 개방 포털: 인증키 없이 쓰므로 한 번에 5건까지만 옵니다 ---------- */
+  const neis = cfg.neis && cfg.neis.office && cfg.neis.school ? cfg.neis : null;
+  async function neisGet(svc, params) {
+    const u = new URL(`https://open.neis.go.kr/hub/${svc}`);
+    Object.entries({ Type: 'json', pSize: 1000, ATPT_OFCDC_SC_CODE: neis.office, SD_SCHUL_CODE: neis.school, ...params }).forEach(([k, v]) => u.searchParams.set(k, v));
+    const r = await fetch(u);
+    if (!r.ok) throw new Error(`NEIS_${r.status}`);
+    const j = await r.json();
+    if (j[svc]) return { total: Number(j[svc][0].head[0].list_total_count) || 0, rows: (j[svc][1] && j[svc][1].row) || [] };
+    if (j.RESULT && j.RESULT.CODE === 'INFO-200') return { total: 0, rows: [] }; // 해당하는 데이터가 없습니다
+    throw new Error((j.RESULT && j.RESULT.CODE) || 'NEIS');
+  }
+
+  /* ---------- 급식: 고른 날짜 하루치를 받아 일정 아래에 보여 줍니다 ---------- */
+  const mealCache = new Map();
+  let mealDay = '', mealTimer = 0;
+  const unescapeHTML = x => x.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const DISH_RE = /^(.*?)\s*\(([\d.\s]+)\)\s*$/; // "어묵우동국 (1.5.6.7.18)" → 이름 + 알레르기 번호
+  const dishList = text => String(text || '').split(/<br\s*\/?>/i).map(x => unescapeHTML(x).trim()).filter(Boolean)
+    .map(x => { const m = DISH_RE.exec(x); return m ? { name: m[1], allergy: m[2].replace(/\s/g, '').replace(/^\.+|\.+$/g, '') } : { name: x, allergy: '' }; });
+  function showMeal(rows) {
+    const body = $('mealBody');
+    if (!rows.length) { body.innerHTML = '<p class="meal-empty">등록된 급식이 없습니다.</p>'; return; }
+    $('mealKcal').textContent = rows.length === 1 && rows[0].CAL_INFO ? rows[0].CAL_INFO.replace(/\s*kcal/i, ' kcal') : '';
+    body.innerHTML = rows.map(r => `${rows.length > 1 ? `<p class="meal-kind">${escapeHTML(r.MMEAL_SC_NM || '')}<span>${escapeHTML((r.CAL_INFO || '').replace(/\s*kcal/i, ' kcal'))}</span></p>` : ''}`
+      + `<ul class="meal-list">${dishList(r.DDISH_NM).map(d => `<li>${escapeHTML(d.name)}${d.allergy ? ` <small>${escapeHTML(d.allergy)}</small>` : ''}</li>`).join('')}</ul>`).join('');
+  }
+  function renderMeal() {
+    if (!neis) { $('mealBox').hidden = true; return; }
+    const day = selected, dt = new Date(`${day}T00:00:00`);
+    $('mealHeading').textContent = day === today ? '오늘의 급식' : `${dt.getMonth() + 1}월 ${dt.getDate()}일 급식`;
+    if (day === mealDay) return;
+    mealDay = day; clearTimeout(mealTimer); $('mealKcal').textContent = '';
+    const body = $('mealBody');
+    if (dt.getDay() === 0 || dt.getDay() === 6 || publicHolidays.some(h => isWithin(h, day))) { body.innerHTML = '<p class="meal-empty">급식이 없는 날입니다.</p>'; return; }
+    if (mealCache.has(day)) { showMeal(mealCache.get(day)); return; }
+    body.innerHTML = '<p class="meal-empty">급식을 불러오는 중…</p>';
+    // 화살표 키로 날짜를 빠르게 넘길 때는 멈춘 날짜만 받습니다.
+    mealTimer = setTimeout(() => neisGet('mealServiceDietInfo', { MLSV_YMD: day.replace(/-/g, '') })
+      .then(r => { mealCache.set(day, r.rows); if (mealDay === day) showMeal(r.rows); })
+      .catch(() => {
+        if (mealDay !== day) return;
+        mealDay = '';
+        body.innerHTML = '<p class="meal-empty">급식 정보를 불러오지 못했습니다. <button type="button" class="text-button" data-meal-retry>다시 시도</button></p>';
+      }), 200);
+  }
+
+  /* ---------- 나이스 학사일정 불러오기 (관리자) ---------- */
+  async function neisSchedule(y, progress) {
+    const DAY = 86400000, ymd = t => new Date(t).toISOString().slice(0, 10).replace(/-/g, '');
+    const rows = [];
+    let calls = 0;
+    async function grab(a, b) { // 5건이 넘는 기간은 반으로 나눠 다시 받습니다.
+      const r = await neisGet('SchoolSchedule', { AA_FROM_YMD: ymd(a), AA_TO_YMD: ymd(b) });
+      progress(++calls);
+      if (r.rows.length >= r.total || a === b) { rows.push(...r.rows); return; }
+      const mid = a + Math.floor((b - a) / DAY / 2) * DAY;
+      await grab(a, mid); await grab(mid + DAY, b);
+    }
+    const months = Array.from({ length: 12 }, (_, m) => [Date.UTC(y, m, 1), Date.UTC(y, m + 1, 0)]);
+    let next = 0;
+    await Promise.all(Array.from({ length: 4 }, async () => { while (next < months.length) { const [a, b] = months[next++]; await grab(a, b); } }));
+    return rows;
+  }
+  // 나이스는 하루에 한 줄씩 주므로 같은 일정이 날짜가 이어지면 기간 하나로 묶고, 붙여넣기 칸에 넣을 줄로 바꿉니다.
+  function neisLines(rows) {
+    const addDay = d => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+    const items = rows.filter(r => r.EVENT_NM && r.SBTR_DD_SC_NM !== '공휴일' && !/토요휴업일/.test(r.EVENT_NM)).map(r => {
+      const name = r.EVENT_NM.trim();
+      const g = [r.ONE_GRADE_EVENT_YN, r.TW_GRADE_EVENT_YN, r.THREE_GRADE_EVENT_YN].map((v, i) => (v === 'Y' ? i + 1 : 0)).filter(Boolean);
+      return { day: `${r.AA_YMD.slice(0, 4)}-${r.AA_YMD.slice(4, 6)}-${r.AA_YMD.slice(6, 8)}`, title: withGrades(name, g.length === 3 ? [] : g),
+        category: r.SBTR_DD_SC_NM === '휴업일' ? 'holiday' : /시험|평가|고사/.test(name) ? 'exam' : 'school' };
+    }).sort((a, b) => a.title.localeCompare(b.title) || a.category.localeCompare(b.category) || a.day.localeCompare(b.day));
+    const merged = [];
+    items.forEach(it => {
+      const last = merged[merged.length - 1];
+      if (last && last.title === it.title && last.category === it.category && (it.day === last.end || it.day === addDay(last.end))) last.end = it.day;
+      else merged.push({ start: it.day, end: it.day, title: it.title, category: it.category });
+    });
+    const dot = d => d.replace(/-/g, '.');
+    return merged.sort(byDate).map(e => `${dot(e.start)}${e.end !== e.start ? `~${dot(e.end)}` : ''}\t${e.title}\t${CATEGORY_NAMES[e.category]}`);
   }
   /* ---------- 다음 일정 D-day (오늘은 한국 시간 기준) ---------- */
   const dayNumber = d => Date.UTC(Number(d.slice(0, 4)), Number(d.slice(5, 7)) - 1, Number(d.slice(8, 10))) / 86400000;
@@ -288,8 +404,8 @@
     const [next, ...rest] = upcoming, cat = next.isPublic ? 'public' : next.category;
     const jump = e => (e.start < today ? today : e.start);
     box.innerHTML = `<p class="dday-label"><span>다음 일정</span><span class="dday-cat ${cat}">${categoryName(next)}</span></p>`
-      + `<button type="button" class="dday-main" data-date="${jump(next)}"><strong class="dday-count ${cat}">${ddayText(next)}</strong><span class="dday-info"><b>${escapeHTML(next.title)}</b><span>${rangeText(next)}</span></span></button>`
-      + (rest.length ? `<ol class="dday-list">${rest.map(e => `<li><button type="button" data-date="${jump(e)}"><span class="dday-date">${withWeekday(e.start)}</span><span class="dday-title">${escapeHTML(e.title)}</span><span class="dday-n">${ddayText(e)}</span></button></li>`).join('')}</ol>` : '');
+      + `<button type="button" class="dday-main" data-date="${jump(next)}"><strong class="dday-count ${cat}">${ddayText(next)}</strong><span class="dday-info"><b>${markTag(next, true)}${escapeHTML(next.title)}</b><span>${rangeText(next)}</span></span></button>`
+      + (rest.length ? `<ol class="dday-list">${rest.map(e => `<li><button type="button" data-date="${jump(e)}"><span class="dday-date">${withWeekday(e.start)}</span><span class="dday-title">${markTag(e, true)}${escapeHTML(e.title)}</span><span class="dday-n">${ddayText(e)}</span></button></li>`).join('')}</ol>` : '');
   }
   function setMonth(next) { month = Math.max(0, Math.min(11, next)); selected = `${YEAR}-${pad(month + 1)}-01`; render(); focusSelected(); }
   function goTo(day, scroll) {
@@ -313,17 +429,24 @@
     $('yearSelect').innerHTML = years.map(y => `<option value="${y}"${y === listYear ? ' selected' : ''}>${y}년</option>`).join('');
     const own = events.filter(e => overlapsYear(e, listYear)).filter(forGrade);
     const hol = listYear === YEAR ? publicHolidays : holidaysFor(listYear);
-    const rows = own.concat(hol).sort((a, b) => a.start.localeCompare(b.start) || (b.isPublic ? 1 : 0) - (a.isPublic ? 1 : 0) || a.title.localeCompare(b.title));
+    // 검색: 일정명·메모·분류·"12월"처럼 달 이름에서 찾고, 띄어쓰기는 무시합니다.
+    const query = $('yearSearch').value.trim(), q = query.replace(/\s+/g, '').toLowerCase(), recentOnly = $('recentOnly').checked;
+    const recentN = own.filter(markOf).length;
+    $('recentWrap').hidden = !recentN && !recentOnly;
+    $('recentCount').textContent = recentN ? `${recentN}건` : '';
+    const hit = e => (!q || `${e.title}${e.note || ''}${categoryName(e)}${Number(e.start.slice(5, 7))}월`.replace(/\s+/g, '').toLowerCase().includes(q)) && (!recentOnly || markOf(e));
+    const rows = own.concat(hol).filter(hit).sort((a, b) => a.start.localeCompare(b.start) || (b.isPublic ? 1 : 0) - (a.isPublic ? 1 : 0) || a.title.localeCompare(b.title));
     $('yearHeading').textContent = `${listYear}학년도 학사 일정`;
-    $('yearSub').textContent = `${gradeFilter ? `${gradeFilter}학년 기준 ` : ''}일정 ${own.length}건 · 공휴일 함께 표시`;
+    $('yearSub').textContent = `${gradeFilter ? `${gradeFilter}학년 기준 ` : ''}일정 ${own.length}건 · 공휴일 함께 표시${q || recentOnly ? ` · 찾은 일정 ${rows.length}건` : ''}`;
     let html = '', current = -1;
     rows.forEach(e => {
       const m = Number((e.start < `${listYear}-01-01` ? `${listYear}-01-01` : e.start).slice(5, 7));
       if (m !== current) { current = m; html += `<tr class="month-row"><th colspan="3" scope="rowgroup">${m}월</th></tr>`; }
       const cat = e.isPublic ? 'public' : e.category, jump = e.start < `${listYear}-01-01` ? `${listYear}-01-01` : e.start;
-      html += `<tr${listYear === YEAR ? ` data-date="${jump}"` : ''}${e.isPublic ? ' class="public"' : ''}><td class="yt-date">${rangeText(e)}</td><td class="yt-title">${escapeHTML(e.title)}</td><td class="yt-cat"><i class="dot ${cat}"></i>${categoryName(e)}</td></tr>`;
+      html += `<tr${listYear === YEAR ? ` data-date="${jump}"` : ''}${e.isPublic ? ' class="public"' : ''}><td class="yt-date">${rangeText(e)}</td><td class="yt-title">${markTag(e)}${escapeHTML(e.title)}${markOf(e) === 'changed' ? `<small class="yt-sub">원래 ${prevText(e)}</small>` : ''}${e.note ? `<small class="yt-sub">${escapeHTML(e.note)}</small>` : ''}</td><td class="yt-cat"><i class="dot ${cat}"></i>${categoryName(e)}</td></tr>`;
     });
-    $('yearBody').innerHTML = html || '<tr><td colspan="3" class="empty-agenda">등록된 일정이 없습니다.</td></tr>';
+    const empty = q ? `‘${escapeHTML(query)}’에 맞는 일정이 없습니다.` : recentOnly ? '최근 7일 동안 바뀐 일정이 없습니다.' : '등록된 일정이 없습니다.';
+    $('yearBody').innerHTML = html || `<tr><td colspan="3" class="empty-agenda">${empty}</td></tr>`;
   }
   function setView(v) {
     view = v === 'list' ? 'list' : 'calendar';
@@ -387,7 +510,7 @@
     const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Changui Academic Calendar//KO', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${esc(name)}`, 'X-WR-TIMEZONE:Asia/Seoul'];
     icsEvents(y).forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:${e.id || `basic-${e.start}-${i}`}@changui-calendar`, `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${compact(e.start)}`, `DTEND;VALUE=DATE:${compact(nextDay(e.end))}`, `SUMMARY:${esc(e.title)}`,
-      `CATEGORIES:${esc(CATEGORY_NAMES[e.category])}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'));
+      `CATEGORIES:${esc(CATEGORY_NAMES[e.category])}`, ...(e.note ? [`DESCRIPTION:${esc(e.note)}`] : []), 'TRANSP:TRANSPARENT', 'END:VEVENT'));
     lines.push('END:VCALENDAR');
     return lines.map(fold).join('\r\n') + '\r\n';
   }
@@ -460,6 +583,7 @@
     editingId = null;
     $('eventTitle').value = ''; $('eventCategory').value = 'school';
     $('eventStart').value = selected; $('eventEnd').value = selected;
+    $('eventNote').value = ''; $('notifyWrap').hidden = true; $('notifyChange').checked = true;
     syncGradeBoxes();
     $('deleteEvent').hidden = true; $('newEvent').hidden = true;
     $('saveEvent').textContent = '일정 추가';
@@ -494,6 +618,7 @@
     editingId = e.id;
     $('eventTitle').value = e.title; $('eventCategory').value = e.category;
     $('eventStart').value = e.start; $('eventEnd').value = e.end;
+    $('eventNote').value = e.note || ''; $('notifyWrap').hidden = false; $('notifyChange').checked = true;
     syncGradeBoxes();
     $('deleteEvent').hidden = false; $('newEvent').hidden = false;
     $('saveEvent').textContent = '수정 저장';
@@ -566,6 +691,12 @@
     if (text.length > 100) return err('일정명이 100자를 넘습니다');
     return { ok: true, start, end, title: text, category: category || guessCategory(text), y, m };
   }
+  // 날짜가 겹치고 한쪽 이름이 다른 쪽에 들어 있으면(예: "졸업"과 "졸업식, 종업식") 같은 일정으로 봅니다.
+  const baseTitle = t => String(t).replace(GRADE_ALL, '').replace(/\s/g, '');
+  const similarTo = r => {
+    const a = baseTitle(r.title);
+    return a.length >= 2 && events.some(e => { const b = baseTitle(e.title); return e.start <= r.end && e.end >= r.start && b.length >= 2 && (b.includes(a) || a.includes(b)); });
+  };
   function parseBulk() {
     const defYear = Number($('bulkYear').value), seen = new Set();
     let last = null;
@@ -574,7 +705,7 @@
       if (!r.ok) return r;
       last = { y: r.y, m: r.m };
       const key = `${r.start}|${r.end}|${r.title.replace(/\s/g, '')}`;
-      r.dup = seen.has(key) ? '위 줄과 같습니다' : events.some(e => `${e.start}|${e.end}|${e.title.replace(/\s/g, '')}` === key) ? '이미 있는 일정' : '';
+      r.dup = seen.has(key) ? '위 줄과 같습니다' : events.some(e => `${e.start}|${e.end}|${e.title.replace(/\s/g, '')}` === key) ? '이미 있는 일정' : similarTo(r) ? '비슷한 일정이 이미 있음' : '';
       seen.add(key);
       return r;
     });
@@ -622,6 +753,9 @@
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
   $('yearSelect').addEventListener('change', ev => { listYear = Number(ev.target.value); renderYear(); });
+  $('yearSearch').addEventListener('input', renderYear);
+  $('recentOnly').addEventListener('change', renderYear);
+  $('mealBody').addEventListener('click', ev => { if (ev.target.closest('[data-meal-retry]')) renderMeal(); });
   $('yearBody').addEventListener('click', ev => { const tr = ev.target.closest('tr[data-date]'); if (tr) goTo(tr.dataset.date, true); });
   $('printBtn').addEventListener('click', openPrint);
   $('printForm').addEventListener('submit', ev => {
@@ -682,10 +816,12 @@
   $('eventForm').addEventListener('submit', async ev => {
     ev.preventDefault();
     const msg = $('saveMessage');
-    const e = { title: $('eventTitle').value.trim(), category: $('eventCategory').value, start: $('eventStart').value, end: $('eventEnd').value };
+    const e = { title: $('eventTitle').value.trim(), category: $('eventCategory').value, start: $('eventStart').value, end: $('eventEnd').value, note: $('eventNote').value.trim().slice(0, 300) };
     if (!e.title) { msg.textContent = '일정명을 입력해 주세요.'; return; }
     if (!e.start || !e.end) { msg.textContent = '시작일과 종료일을 입력해 주세요.'; return; }
     if (e.start > e.end) { msg.textContent = '종료일은 시작일보다 빠를 수 없습니다.'; return; }
+    if (editingId) Object.assign(e, changeRecord(events.find(x => x.id === editingId) || {}, e, $('notifyChange').checked));
+    else e.createdAt = new Date().toISOString();
     msg.textContent = '저장 중입니다…';
     try { await saveEvent(e, editingId); await afterChange(editingId ? '일정을 수정했습니다.' : '일정을 추가했습니다.'); }
     catch (err) { msg.textContent = err.message === 'PERMISSION' ? '권한이 없어 저장하지 못했습니다. 다시 로그인해 주세요.' : '저장하지 못했습니다. 인터넷 연결을 확인해 주세요.'; }
@@ -700,7 +836,22 @@
 
   let bulkTimer = 0;
   $('bulkText').addEventListener('input', () => { clearTimeout(bulkTimer); bulkTimer = setTimeout(renderBulk, 200); });
-  $('bulkYear').addEventListener('change', renderBulk);
+  $('bulkYear').addEventListener('change', () => { $('neisYear').textContent = $('bulkYear').value; renderBulk(); });
+  $('neisImport').closest('.neis-row').hidden = !neis;
+  $('neisImport').addEventListener('click', async () => {
+    const btn = $('neisImport'), msg = $('bulkMessage'), y = Number($('bulkYear').value);
+    if ($('bulkText').value.trim() && !confirm('붙여넣기 칸에 적힌 내용을 지우고 나이스 일정으로 채울까요?')) return;
+    btn.disabled = true; msg.textContent = '';
+    try {
+      const lines = neisLines(await neisSchedule(y, n => { btn.textContent = `불러오는 중… ${n}`; }));
+      if (!lines.length) { msg.textContent = `나이스에 ${y}년 학사일정이 아직 없습니다. 학교가 나이스에 올린 뒤 다시 불러오세요.`; return; }
+      $('bulkText').value = lines.join('\n');
+      renderBulk();
+      const ready = bulkRows.filter(r => r.ok && !r.dup).length;
+      msg.textContent = `나이스에서 ${lines.length}건을 불러왔습니다. 그중 ${ready}건이 새로 저장됩니다. 넣지 않을 줄은 위 칸에서 지운 뒤 저장하세요.`;
+    } catch { msg.textContent = '나이스에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.'; }
+    finally { btn.disabled = false; btn.textContent = '나이스에서 불러오기'; }
+  });
   $('bulkClear').addEventListener('click', () => { $('bulkText').value = ''; renderBulk(); $('bulkText').focus(); });
   $('bulkSave').addEventListener('click', async () => {
     const list = bulkRows.filter(r => r.ok && !r.dup).map(({ start, end, title, category }) => ({ start, end, title, category }));

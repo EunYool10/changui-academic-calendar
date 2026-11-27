@@ -274,7 +274,13 @@ button.day:hover { background: var(--sub); }
 .year-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin-bottom: 16px; }
 .year-head h2 { margin: 0; color: var(--forest-deep); font: 500 clamp(24px, 1vw + 20px, 30px)/1.2 var(--serif); letter-spacing: -.03em; }
 .year-sub { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-.year-tools { display: flex; align-items: center; gap: 6px; }
+.year-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.year-search input { width: 220px; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 6px; outline-color: var(--forest); background: var(--paper); color: var(--ink); font-size: 14px; }
+.recent-only { display: flex; align-items: center; gap: 6px; color: #4d5850; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.recent-only[hidden] { display: none; }
+.recent-only input { width: 16px; height: 16px; margin: 0; accent-color: var(--forest); }
+.recent-only span { color: var(--brick); }
+.yt-sub { display: block; margin-top: 2px; color: var(--muted); font: 12px/1.5 var(--event); white-space: pre-line; }
 .year-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .year-table th, .year-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .year-table thead th { border-top: 1px solid var(--line-strong); border-bottom-color: var(--line-strong); background: var(--sub); color: var(--muted); font-size: 12px; font-weight: 400; }
@@ -320,6 +326,39 @@ button.day:hover { background: var(--sub); }
 .bulk-table tr.skip td { color: var(--muted); }
 .bulk-table tr.bad td { background: var(--brick-wash); color: #854b38; }
 .bulk-table tr.bad td:first-child { white-space: normal; overflow-wrap: anywhere; }
+
+/* Recently changed or added entries: a small solid tag in front of the title, kept for 7 days. */
+.mark-tag { display: inline-block; margin-right: 4px; padding: 0 3px; border-radius: 2px; color: #fffef9; font-size: .82em; font-weight: 700; line-height: 1.35; vertical-align: 1px; letter-spacing: 0; }
+.mark-tag.changed { background: var(--brick); }
+.mark-tag.new { background: var(--forest); }
+.mark-line { margin: 4px 0 0; font-size: 12px; }
+.mark-line.changed { color: var(--brick); }
+.mark-line.new { color: var(--forest); }
+.agenda-note { margin: 4px 0 0; color: #4d5850; font: 13px/1.6 var(--event); white-space: pre-line; overflow-wrap: anywhere; word-break: keep-all; }
+
+/* Meal box under the day's agenda (data from NEIS). */
+.meal-box { margin-top: 22px; padding: 14px 16px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--paper); }
+.meal-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.meal-head h4 { margin: 0; color: var(--forest-deep); font: 500 16px/1.4 var(--serif); }
+.meal-kcal { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.meal-kind { margin: 10px 0 0; color: var(--forest); font-size: 12px; }
+.meal-kind span { margin-left: 6px; color: var(--muted); }
+.meal-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.meal-list li { padding: 3px 0; color: var(--ink); font: 14px/1.5 var(--event); word-break: keep-all; }
+.meal-list small { color: var(--muted); font-size: 11px; }
+.meal-empty { margin: 8px 0 0; color: var(--muted); font: 13px/1.6 var(--serif); }
+.meal-source { margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.5; word-break: keep-all; }
+
+/* Admin form: memo, change notice, NEIS import. */
+.note-field { display: block; margin: 12px 0 0; color: #59635c; font-size: 13px; }
+.note-field span { margin-left: 4px; color: var(--muted); font-size: 12px; }
+.note-field textarea { display: block; width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 6px; outline-color: var(--forest); background: #fffef9; color: var(--ink); font: 14px/1.6 var(--event); resize: vertical; }
+.notify-line { margin: 8px 0 0; color: #59635c; font-size: 12.5px; line-height: 1.5; word-break: keep-all; }
+.notify-line[hidden] { display: none !important; }
+.neis-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; }
+.neis-row[hidden] { display: none; }
+.neis-row .quiet-button { flex: none; }
+.neis-hint { flex: 1 1 220px; color: var(--muted); font-size: 12px; line-height: 1.5; word-break: keep-all; }
 
 /* Print dialog: pick calendar pages or the year list. */
 .print-pick { margin: 0 0 12px; padding: 0; border: 0; border-top: 1px solid var(--line); }
@@ -390,7 +429,8 @@ button.day:hover { background: var(--sub); }
   .year-table .yt-cat { grid-column: 2; grid-row: 1; font-size: 12px; }
   .year-table .yt-title { grid-column: 1 / -1; font-size: 15px; }
   .year-table .month-row th { padding: 16px 2px 6px; }
-  .bulk-text textarea, .bulk-year select { font-size: 16px; }
+  .bulk-text textarea, .bulk-year select, .note-field textarea, .year-search input { font-size: 16px; }
+  .year-tools, .year-search, .year-search input { width: 100%; }
   .bulk-table td:first-child { width: 34%; font-size: 12px; white-space: normal; }
   .bulk-table td:nth-child(2) { word-break: keep-all; }
 }

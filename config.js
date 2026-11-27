@@ -7,5 +7,7 @@ window.SCHOOL_CALENDAR_CONFIG = {
     projectId: "changui-calendar",
     appId: "1:174475875386:web:974bcaa12a3c2b2122d103"
   },
-  staffDomain: "changui-calendar.firebaseapp.com"
+  staffDomain: "changui-calendar.firebaseapp.com",
+  // 나이스 교육정보 개방 포털 학교 코드(경기도교육청 J10, 창의경영고등학교 7531407): 급식 표시와 학사일정 불러오기에 씁니다.
+  neis: { office: "J10", school: "7531407" }
 };
