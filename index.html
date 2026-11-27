@@ -21,7 +21,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="학사 달력">
-  <link rel="stylesheet" href="style.css?v=20261127-4">
+  <link rel="stylesheet" href="style.css?v=20261127-5">
   <script src="config.js?v=20261127-4"></script>
   <script src="holidays.js?v=20261127-1"></script>
   <script id="initialEvents" type="application/json">[
@@ -61,7 +61,7 @@
     {"start":"2026-12-30","end":"2026-12-30","title":"금요일 시간표 운영","category":"school"},
     {"start":"2026-12-31","end":"2026-12-31","title":"졸업식, 종업식","category":"school"}
   ]</script>
-  <script defer src="app.js?v=20261127-4"></script>
+  <script defer src="app.js?v=20261127-5"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -100,7 +100,7 @@
         <div class="footer-buttons"><button id="installBtn" type="button" hidden>홈 화면에 추가</button><button id="termsBtn" type="button">이용 안내·개인정보</button></div>
       </div>
       <p id="installHint" class="install-hint" hidden>iPhone·iPad: Safari 아래쪽의 공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 고르세요.</p>
-      <div class="footer-sub"><span>일정은 학교 사정에 따라 바뀔 수 있습니다. 학교 공지와 함께 확인해 주세요.</span><span class="credit">기획·제작 <b>은율</b></span></div>
+      <div class="footer-sub"><span>일정은 학교 사정에 따라 바뀔 수 있습니다. 학교 공지와 함께 확인해 주세요.</span><span class="credit">기획·제작 <a id="creditLink" class="credit-link" href="https://eunyool10.github.io/link-collection/" target="_blank" rel="noopener">은율</a></span></div>
     </footer>
   </main>
   <div id="printSheet" class="print-sheet" aria-hidden="true"></div>
@@ -200,6 +200,17 @@
       <p class="fine-print print-tip">달력은 A4 가로 방향으로 나옵니다. 위에서 학년을 골라 두면 그 학년 일정만 인쇄합니다.</p>
       <button class="solid-button wide" type="submit">인쇄하기</button>
     </form>
+  </dialog>
+
+  <dialog id="leaveDialog" class="dialog leave-dialog">
+    <div class="dialog-card">
+      <button type="button" class="close" data-close aria-label="닫기">×</button>
+      <p class="eyebrow">다른 사이트로 이동</p>
+      <h2>외부 사이트로 이동할까요?</h2>
+      <p class="dialog-copy">학사 달력을 벗어나 제작자 은율의 링크 모음 페이지를 새 창으로 엽니다.</p>
+      <p class="leave-url">eunyool10.github.io/link-collection</p>
+      <div class="form-actions"><span class="spacer"></span><button type="button" class="quiet-button" data-close>취소</button><a id="leaveGo" class="solid-button" href="https://eunyool10.github.io/link-collection/" target="_blank" rel="noopener">이동</a></div>
+    </div>
   </dialog>
 
   <dialog id="termsDialog" class="dialog terms-dialog">

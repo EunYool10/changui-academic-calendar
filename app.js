@@ -792,6 +792,9 @@
   });
   $('logoutBtn').addEventListener('click', signOut);
   $('termsBtn').addEventListener('click', () => $('termsDialog').showModal());
+  // 제작자 이름 링크: 바로 나가지 않고 외부 사이트로 이동한다는 안내를 먼저 보여 줍니다.
+  $('creditLink').addEventListener('click', ev => { ev.preventDefault(); $('leaveDialog').showModal(); });
+  $('leaveGo').addEventListener('click', () => $('leaveDialog').close());
   $('termsInline').addEventListener('click', () => $('termsDialog').showModal());
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
 

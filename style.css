@@ -170,7 +170,11 @@ button.day:hover { background: var(--sub); }
 .footer-sub { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .footer-sub span { word-break: keep-all; }
 .credit { white-space: nowrap; }
-.credit b { margin-left: 4px; color: var(--forest); font-weight: 700; }
+.credit b, .credit-link { margin-left: 4px; color: var(--forest); font-weight: 700; }
+.credit-link { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--forest) 35%, transparent); text-underline-offset: 3px; }
+.credit-link:hover { text-decoration-color: currentColor; }
+.leave-url { margin: -6px 0 16px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--sub); color: #4d5850; font-size: 13px; overflow-wrap: anywhere; }
+.leave-dialog .form-actions a.solid-button { display: inline-flex; align-items: center; text-decoration: none; }
 
 .quiet-button, .solid-button, .delete-button { padding: 8px 14px; border: 0; border-radius: 6px; font-size: 13px; }
 .quiet-button { background: transparent; color: inherit; }
