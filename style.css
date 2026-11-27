@@ -353,6 +353,15 @@ a.credit { color: inherit; text-decoration: none; cursor: pointer; }
 .meal-list small { color: var(--muted); font-size: 11px; }
 .meal-empty { margin: 8px 0 0; color: var(--muted); font: 13px/1.6 var(--serif); }
 .meal-source { margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.5; word-break: keep-all; }
+.meal-source p { margin: 4px 0 0; }
+.allergy summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; list-style: none; cursor: pointer; }
+.allergy summary::-webkit-details-marker { display: none; }
+.allergy summary span { color: var(--forest); text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.allergy summary:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.allergy[open] .show, .allergy:not([open]) .hide { display: none; }
+.allergy-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 8px; margin: 6px 0 2px; padding: 0; list-style: none; color: #4d5850; }
+.allergy-list b { display: inline-block; min-width: 18px; color: var(--muted); font-weight: 400; }
+.allergy-note { margin: 2px 0 0; color: var(--muted); }
 
 /* Admin form: memo, change notice, NEIS import. */
 .note-field { display: block; margin: 12px 0 0; color: #59635c; font-size: 13px; }
